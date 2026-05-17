@@ -36,7 +36,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-qurban_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-password}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-qurban_db}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost,http://127.0.0.1,http://100.64.168.127}
     ports:
       - "5000:5000"
     depends_on:

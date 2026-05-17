@@ -46,6 +46,9 @@ copy .env.docker .env
 # 3. Build dan jalankan dengan Docker Compose
 docker-compose up --build
 
+# Jika frontend diakses dari IP host, pastikan CORS_ORIGIN berisi origin tersebut
+# contoh: CORS_ORIGIN=http://localhost,http://127.0.0.1,http://100.64.168.127
+
 # 4. Tunggu hingga semua service sehat (~30-60 detik)
 
 # 5. Akses aplikasi
