@@ -160,8 +160,8 @@ Qurban/
 │   │       └── useAsync.js         # Custom hooks
 │   ├── index.html
 │   ├── vite.config.js
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
+│   ├── tailwind.config.cjs
+│   ├── postcss.config.cjs
 │   ├── package.json
 │   └── .gitignore
 │
@@ -198,7 +198,7 @@ Password: admin123
 
 ⚠️ **PENTING**: Ubah password setelah login pertama!
 
-Lihat [AUTH.md](./AUTH.md) untuk dokumentasi lengkap authentication.
+ Dokumentasi authentication tambahan sudah dihapus bersama file terpisah.
 
 ### Endpoints
 

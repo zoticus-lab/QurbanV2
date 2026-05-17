@@ -1,0 +1,11 @@
+.git
+.gitignore
+node_modules
+**/node_modules
+dist
+**/dist
+*.log
+*.md
+backend/test-connection.js
+backend/test-qr.png
+frontend/.vite

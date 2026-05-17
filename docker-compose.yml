@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL Database
   mysql:
@@ -26,7 +24,7 @@ services:
   # Backend API
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile.backend
     container_name: qurban-backend
     restart: unless-stopped
@@ -46,7 +44,7 @@ services:
     networks:
       - qurban-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1))"]
       timeout: 10s
       retries: 5
       interval: 10s
@@ -54,7 +52,7 @@ services:
   # Frontend Web Server
   frontend:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile.frontend
     container_name: qurban-frontend
     restart: unless-stopped
