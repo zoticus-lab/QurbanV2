@@ -67,8 +67,8 @@ export const couponService = {
   getAllCoupons: (limit = 100, offset = 0) => 
     api.get('/coupons', { params: { limit, offset } }),
   
-  registerCoupon: (qr_secret, nama_penerima, rt, rw, alamat) => 
-    api.post('/coupons/register', { qr_secret, nama_penerima, rt, rw, alamat }),
+  registerCoupon: (qr_secret, nama_penerima, rt, rw, alamat, photo_penerima) => 
+    api.post('/coupons/register', { qr_secret, nama_penerima, rt, rw, alamat, photo_penerima }),
   
   confirmPickup: (qr_secret) => 
     api.post('/coupons/confirm-pickup', { qr_secret }),
@@ -81,6 +81,14 @@ export const couponService = {
 export const dashboardService = {
   getStatistics: () => 
     api.get('/dashboard/stats'),
+};
+
+// Finance endpoints
+export const financeService = {
+  addTransaction: (data) => 
+    api.post('/finance', data),
+  getTransactions: () => 
+    api.get('/finance'),
 };
 
 // Health check

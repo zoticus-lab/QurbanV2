@@ -49,14 +49,14 @@ class CouponModel {
   }
 
   // Register coupon (status kosong -> terdaftar)
-  static async register(qr_secret, nama_penerima, rt, rw, alamat) {
+  static async register(qr_secret, nama_penerima, rt, rw, alamat, photo_penerima = null) {
     const conn = await pool.getConnection();
     try {
       const [result] = await conn.execute(
         `UPDATE coupons 
-         SET nama_penerima = ?, rt = ?, rw = ?, alamat = ?, status = 'terdaftar' 
+         SET nama_penerima = ?, rt = ?, rw = ?, alamat = ?, photo_penerima = ?, status = 'terdaftar' 
          WHERE qr_secret = ? AND status = 'kosong'`,
-        [nama_penerima, rt, rw, alamat, qr_secret]
+        [nama_penerima, rt, rw, alamat, photo_penerima, qr_secret]
       );
       
       return result.affectedRows > 0;
@@ -86,9 +86,12 @@ class CouponModel {
   static async getAll(limit = 100, offset = 0) {
     const conn = await pool.getConnection();
     try {
+      // Ensure limit and offset are integers
+      limit = parseInt(limit) || 100;
+      offset = parseInt(offset) || 0;
+      
       const [rows] = await conn.execute(
-        'SELECT * FROM coupons ORDER BY no_urut ASC LIMIT ? OFFSET ?',
-        [limit, offset]
+        `SELECT * FROM coupons ORDER BY no_urut ASC LIMIT ${limit} OFFSET ${offset}`
       );
       const [countResult] = await conn.execute('SELECT COUNT(*) as total FROM coupons');
       return {
@@ -130,6 +133,83 @@ class CouponModel {
         GROUP BY status
       `);
       return rows;
+    } finally {
+      conn.release();
+    }
+  }
+
+  // Update coupon
+  static async update(id, { nama_penerima, rt, rw, alamat, status, photo_penerima }) {
+    const conn = await pool.getConnection();
+    try {
+      const updates = [];
+      const values = [];
+
+      if (nama_penerima !== undefined) {
+        updates.push('nama_penerima = ?');
+        values.push(nama_penerima);
+      }
+      if (rt !== undefined) {
+        updates.push('rt = ?');
+        values.push(rt);
+      }
+      if (rw !== undefined) {
+        updates.push('rw = ?');
+        values.push(rw);
+      }
+      if (alamat !== undefined) {
+        updates.push('alamat = ?');
+        values.push(alamat);
+      }
+      if (photo_penerima !== undefined) {
+        updates.push('photo_penerima = ?');
+        values.push(photo_penerima);
+      }
+      if (status !== undefined) {
+        updates.push('status = ?');
+        values.push(status);
+      }
+
+      if (updates.length === 0) {
+        return false;
+      }
+
+      values.push(id);
+
+      const [result] = await conn.execute(
+        `UPDATE coupons SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  // Delete coupon
+  static async delete(id) {
+    const conn = await pool.getConnection();
+    try {
+      const [result] = await conn.execute(
+        'DELETE FROM coupons WHERE id = ?',
+        [id]
+      );
+      return result.affectedRows > 0;
+    } finally {
+      conn.release();
+    }
+  }
+
+  // Get coupon by ID
+  static async getById(id) {
+    const conn = await pool.getConnection();
+    try {
+      const [rows] = await conn.execute(
+        'SELECT * FROM coupons WHERE id = ?',
+        [id]
+      );
+      return rows[0] || null;
     } finally {
       conn.release();
     }

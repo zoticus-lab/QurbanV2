@@ -4,16 +4,31 @@ const cors = require('cors');
 const couponRoutes = require('./routes/coupons');
 const dashboardRoutes = require('./routes/dashboard');
 const authRoutes = require('./routes/auth');
+const financeRoutes = require('./routes/finance');
 const { verifyToken, requireAdmin, requireScanner } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'http://localhost:5173'
-}));
-app.use(express.json());
+// Middleware - CORS configuration
+const corsOptions = {
+  origin: function(origin, callback) {
+    // Allow all origins in development
+    if (process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173').split(',');
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  }
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Public Routes
@@ -22,6 +37,7 @@ app.use('/api/auth', authRoutes);
 // Protected Routes
 app.use('/api/coupons', verifyToken, couponRoutes);
 app.use('/api/dashboard', verifyToken, dashboardRoutes);
+app.use('/api/finance', verifyToken, financeRoutes);
 
 // Health check (no auth required)
 app.get('/api/health', (req, res) => {

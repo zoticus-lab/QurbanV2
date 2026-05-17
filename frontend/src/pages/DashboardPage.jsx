@@ -14,8 +14,9 @@ export default function DashboardPage() {
     const fetchStats = async () => {
       try {
         const response = await dashboardService.getStatistics();
-        setStats(response.data.statistics);
-        setProgress(response.data.progress);
+        // API response structure: { success: true, data: { statistics: {...}, progress: [...] } }
+        setStats(response.data.data.statistics);
+        setProgress(response.data.data.progress);
       } catch (err) {
         setError('Failed to fetch statistics');
         console.error(err);
@@ -32,7 +33,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-8 flex items-center justify-center h-screen">
+      <div className="p-4 md:p-8 flex items-center justify-center h-screen">
         <div className="text-gray-500">Loading dashboard...</div>
       </div>
     );
@@ -40,7 +41,7 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="p-8">
+      <div className="p-4 md:p-8">
         <div className="bg-red-50 text-red-700 p-4 rounded-lg">{error}</div>
       </div>
     );
@@ -52,7 +53,7 @@ export default function DashboardPage() {
   const totalCount = stats?.total_coupons || 0;
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-2">Ringkasan Distribusi Kurban</p>

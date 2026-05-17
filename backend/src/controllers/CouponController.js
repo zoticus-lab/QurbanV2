@@ -26,17 +26,20 @@ class CouponController {
     }
   }
 
-  // Get coupon by QR secret
+  // Get coupon by QR secret or ID
   static async getCoupon(req, res) {
     try {
-      const { qr_secret } = req.params;
+      const { qr_secret, id } = req.params;
       
-      if (!qr_secret) {
-        return res.status(400).json({ error: 'QR secret is required' });
+      let coupon;
+      if (id) {
+        coupon = await CouponModel.getById(id);
+      } else if (qr_secret) {
+        coupon = await CouponModel.getByCouponSecret(qr_secret);
+      } else {
+        return res.status(400).json({ error: 'QR secret or ID is required' });
       }
 
-      const coupon = await CouponModel.getByCouponSecret(qr_secret);
-      
       if (!coupon) {
         return res.status(404).json({ error: 'Coupon not found' });
       }
@@ -51,7 +54,7 @@ class CouponController {
   // Register coupon (scan & input data)
   static async registerCoupon(req, res) {
     try {
-      const { qr_secret, nama_penerima, rt, rw, alamat } = req.body;
+      const { qr_secret, nama_penerima, rt, rw, alamat, photo_penerima } = req.body;
       
       if (!qr_secret || !nama_penerima || !rt || !rw || !alamat) {
         return res.status(400).json({ error: 'All fields are required' });
@@ -68,13 +71,13 @@ class CouponController {
         });
       }
 
-      const registered = await CouponModel.register(qr_secret, nama_penerima, rt, rw, alamat);
+      const registered = await CouponModel.register(qr_secret, nama_penerima, rt, rw, alamat, photo_penerima);
       
       if (registered) {
         res.json({ 
           success: true, 
           message: 'Coupon registered successfully',
-          data: { qr_secret, nama_penerima, rt, rw, alamat, status: 'terdaftar' }
+          data: { qr_secret, nama_penerima, rt, rw, alamat, photo_penerima, status: 'terdaftar' }
         });
       } else {
         res.status(400).json({ error: 'Failed to register coupon' });
@@ -174,6 +177,68 @@ class CouponController {
       res.json({ success: true, qr_image: qrImage });
     } catch (error) {
       console.error('Error generating QR:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Update coupon
+  static async updateCoupon(req, res) {
+    try {
+      const { id } = req.params;
+      const { nama_penerima, rt, rw, alamat, status, photo_penerima } = req.body;
+
+      const coupon = await CouponModel.getById(id);
+      if (!coupon) {
+        return res.status(404).json({ error: 'Coupon not found' });
+      }
+
+      const updated = await CouponModel.update(id, {
+        nama_penerima,
+        rt,
+        rw,
+        alamat,
+        status,
+        photo_penerima
+      });
+
+      if (updated) {
+        const updatedCoupon = await CouponModel.getById(id);
+        res.json({ 
+          success: true, 
+          message: 'Coupon updated successfully',
+          data: updatedCoupon
+        });
+      } else {
+        res.status(400).json({ error: 'Failed to update coupon' });
+      }
+    } catch (error) {
+      console.error('Error updating coupon:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Delete coupon
+  static async deleteCoupon(req, res) {
+    try {
+      const { id } = req.params;
+
+      const coupon = await CouponModel.getById(id);
+      if (!coupon) {
+        return res.status(404).json({ error: 'Coupon not found' });
+      }
+
+      const deleted = await CouponModel.delete(id);
+
+      if (deleted) {
+        res.json({ 
+          success: true, 
+          message: 'Coupon deleted successfully'
+        });
+      } else {
+        res.status(400).json({ error: 'Failed to delete coupon' });
+      }
+    } catch (error) {
+      console.error('Error deleting coupon:', error);
       res.status(500).json({ error: error.message });
     }
   }

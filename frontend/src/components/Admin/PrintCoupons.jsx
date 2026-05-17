@@ -1,20 +1,38 @@
 import React, { useState, useRef } from 'react';
-import { Download, Upload, Loader } from 'lucide-react';
+import { Download, Upload, Loader, Settings2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { couponService } from '../../services/api';
 import CouponLayout from './CouponLayout';
 
 export default function PrintCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [error, setError] = useState(null);
   const [backgroundImage, setBackgroundImage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // State untuk kustomisasi kupon
+  const [couponTitle, setCouponTitle] = useState('KUPON KURBAN');
+  const [titleSize, setTitleSize] = useState(24);
+  const [masjidName, setMasjidName] = useState('Masjid An-Nur');
+  const [couponDate, setCouponDate] = useState(new Date().toLocaleDateString('id-ID'));
+  const [eventTime, setEventTime] = useState('08:00 - Selesai');
+  const [eventAddress, setEventAddress] = useState('Halaman Masjid An-Nur');
+  const [qrSize, setQrSize] = useState(60);
+  const [qrPosition, setQrPosition] = useState('top'); // 'top' atau 'bottom'
+  const [panitiaRt, setPanitiaRt] = useState('07');
+  const [panitiaRw, setPanitiaRw] = useState('04');
+  const [bgOpacity, setBgOpacity] = useState(20); // Default transparan 20%
+  const [bgSize, setBgSize] = useState(100); // Default ukuran 100%
 
   const loadCoupons = async () => {
     setLoading(true);
     try {
       const response = await couponService.getAllCoupons(500, 0);
-      setCoupons(response.data.data);
+      // API response structure: { success: true, data: { data: [...], total: 19 } }
+      setCoupons(response.data.data.data);
       setError(null);
     } catch (err) {
       setError('Gagal memuat data kupon');
@@ -35,24 +53,42 @@ export default function PrintCoupons() {
     }
   };
 
-  const handleDownloadPDF = () => {
-    const couponLayout = document.getElementById('coupon-layout');
-    if (!couponLayout) return;
-
-    const html2canvas = window.html2canvas;
-    const jsPDF = window.jsPDF;
-
-    if (!html2canvas || !jsPDF) {
-      alert('Library PDF tidak tersedia. Pastikan html2canvas dan jsPDF sudah dimuat.');
+  const handleDownloadPDF = async () => {
+    const pages = document.querySelectorAll('.coupon-page');
+    if (!pages || pages.length === 0) {
+      alert('Layout tidak ditemukan');
       return;
     }
 
-    html2canvas(couponLayout, { scale: 2 }).then((canvas) => {
+    try {
+      setGeneratingPdf(true);
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, 210, 297);
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // Lebar A4 (210 mm)
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // Tinggi A4 (297 mm)
+      
+      // Render dan tambahkan setiap halaman secara terpisah
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], { 
+          scale: 3, // Resolusi lebih tinggi agar tidak buram
+          useCORS: true // Membantu memuat gambar eksternal dengan baik
+        });
+        const imgData = canvas.toDataURL('image/png', 1.0); // Kualitas maksimal
+        
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      }
+
       pdf.save('kupon-kurban.pdf');
-    });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Gagal membuat PDF: ' + error.message);
+    } finally {
+      setGeneratingPdf(false);
+    }
   };
 
   return (
@@ -101,13 +137,152 @@ export default function PrintCoupons() {
               )}
             </div>
 
+            {/* Panel Kustomisasi */}
+            <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
+                <Settings2 size={18} className="text-gray-700" />
+                <h4 className="font-semibold text-gray-800">Kustomisasi Kupon</h4>
+              </div>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3 border-b border-gray-200 pb-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Judul Kupon</label>
+                    <input
+                      type="text"
+                      value={couponTitle}
+                      onChange={(e) => setCouponTitle(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Ukuran Judul (px)</label>
+                    <input
+                      type="number"
+                      value={titleSize}
+                      onChange={(e) => setTitleSize(parseInt(e.target.value) || 24)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Nama Penyelenggara</label>
+                  <input
+                    type="text"
+                    value={masjidName}
+                    onChange={(e) => setMasjidName(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Alamat / Lokasi</label>
+                  <input
+                    type="text"
+                    value={eventAddress}
+                    onChange={(e) => setEventAddress(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Tanggal Acara</label>
+                  <input
+                    type="text"
+                    value={couponDate}
+                    onChange={(e) => setCouponDate(e.target.value)}
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                  />
+                </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Jam Mulai</label>
+                    <input
+                      type="text"
+                      value={eventTime}
+                      onChange={(e) => setEventTime(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Panitia RT</label>
+                    <input
+                      type="text"
+                      value={panitiaRt}
+                      onChange={(e) => setPanitiaRt(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Panitia RW</label>
+                    <input
+                      type="text"
+                      value={panitiaRw}
+                      onChange={(e) => setPanitiaRw(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Ukuran QR (px)</label>
+                    <input
+                      type="number"
+                      value={qrSize}
+                      onChange={(e) => setQrSize(parseInt(e.target.value) || 40)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Posisi QR</label>
+                    <select value={qrPosition} onChange={(e) => setQrPosition(e.target.value)} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500">
+                      <option value="top">Atas</option>
+                      <option value="bottom">Bawah</option>
+                      <option value="hidden">Sembunyikan</option>
+                    </select>
+                  </div>
+                </div>
+
+                {backgroundImage && (
+                  <div className="grid grid-cols-2 gap-3 border-t border-gray-200 pt-3">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Opacity BG ({bgOpacity}%)</label>
+                      <input 
+                        type="range" min="5" max="100" 
+                        value={bgOpacity} 
+                        onChange={(e) => setBgOpacity(e.target.value)} 
+                        className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Ukuran BG ({bgSize}%)</label>
+                      <input 
+                        type="range" min="20" max="150" 
+                        value={bgSize} 
+                        onChange={(e) => setBgSize(e.target.value)} 
+                        className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <button
               onClick={handleDownloadPDF}
-              disabled={coupons.length === 0}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+              disabled={coupons.length === 0 || generatingPdf}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
             >
-              <Download size={20} />
-              Download PDF A4
+              {generatingPdf ? (
+                <>
+                  <Loader className="animate-spin" size={20} />
+                  Membuat PDF...
+                </>
+              ) : (
+                <>
+                  <Download size={20} />
+                  Download PDF A4
+                </>
+              )}
             </button>
 
             <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
@@ -130,7 +305,22 @@ export default function PrintCoupons() {
                 Preview Kupon ({coupons.length} total)
               </h3>
               <div id="coupon-layout">
-                <CouponLayout coupons={coupons} backgroundImage={backgroundImage} />
+                <CouponLayout 
+                  coupons={coupons} 
+                  backgroundImage={backgroundImage} 
+                  couponTitle={couponTitle}
+                  titleSize={titleSize}
+                  masjidName={masjidName}
+                  couponDate={couponDate}
+                  eventTime={eventTime}
+                  eventAddress={eventAddress}
+                  qrSize={qrSize}
+                  qrPosition={qrPosition}
+                  panitiaRt={panitiaRt}
+                  panitiaRw={panitiaRw}
+                  bgOpacity={bgOpacity}
+                  bgSize={bgSize}
+                />
               </div>
             </div>
           ) : (

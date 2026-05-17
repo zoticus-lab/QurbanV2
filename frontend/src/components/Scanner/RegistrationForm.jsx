@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Camera, Image as ImageIcon } from 'lucide-react';
+import { compressImage } from '../../utils/imageUtils';
 
 export default function RegistrationForm({ qr_secret, no_urut, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
     nama_penerima: '',
     rt: '',
     rw: '',
-    alamat: ''
+    alamat: '',
+    photo_penerima: null
   });
 
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
@@ -27,6 +31,36 @@ export default function RegistrationForm({ qr_secret, no_urut, onSubmit, onCance
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrors(prev => ({ ...prev, photo_penerima: 'File harus berupa gambar' }));
+      return;
+    }
+
+    try {
+      setIsCompressing(true);
+      setErrors(prev => ({ ...prev, photo_penerima: '' }));
+      
+      const compressedBase64 = await compressImage(file);
+      
+      setFormData(prev => ({ ...prev, photo_penerima: compressedBase64 }));
+      setPhotoPreview(compressedBase64);
+    } catch (error) {
+      console.error('Error compressing image:', error);
+      setErrors(prev => ({ ...prev, photo_penerima: 'Gagal memproses gambar' }));
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
+  const removePhoto = () => {
+    setFormData(prev => ({ ...prev, photo_penerima: null }));
+    setPhotoPreview(null);
   };
 
   const handleSubmit = (e) => {
@@ -124,10 +158,61 @@ export default function RegistrationForm({ qr_secret, no_urut, onSubmit, onCance
           {errors.alamat && <p className="text-red-600 text-sm mt-1">{errors.alamat}</p>}
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Foto Penerima (Opsional)
+          </label>
+          
+          <div className="mt-1 flex items-center gap-4">
+            {photoPreview ? (
+              <div className="relative">
+                <img 
+                  src={photoPreview} 
+                  alt="Preview" 
+                  className="h-32 w-32 object-cover rounded-lg border border-gray-300"
+                />
+                <button
+                  type="button"
+                  onClick={removePhoto}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                >
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2 w-full">
+                <label className="flex-1 flex flex-col items-center justify-center py-4 px-6 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                  <div className="flex flex-col items-center justify-center">
+                    <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                    <p className="text-sm text-gray-500 text-center">
+                      <span className="font-semibold text-green-600">Ambil Foto</span> atau upload
+                    </p>
+                  </div>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    capture="environment"
+                    className="hidden" 
+                    onChange={handlePhotoChange}
+                    disabled={isCompressing}
+                  />
+                </label>
+              </div>
+            )}
+          </div>
+          {isCompressing && <p className="text-blue-600 text-sm mt-2">Memproses gambar...</p>}
+          {errors.photo_penerima && <p className="text-red-600 text-sm mt-1">{errors.photo_penerima}</p>}
+        </div>
+
         <div className="flex gap-4 pt-4">
           <button
             type="submit"
-            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-all"
+            disabled={isCompressing}
+            className={`flex-1 font-semibold py-3 px-4 rounded-lg transition-all ${
+              isCompressing 
+                ? 'bg-green-400 cursor-not-allowed text-white' 
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
           >
             ✓ Daftarkan Kupon
           </button>
