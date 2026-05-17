@@ -70,6 +70,17 @@ services:
       interval: 10s
       start_period: 20s
 
+  # Cloudflare Tunnel (ephemeral) - exposes frontend via trycloudflare.com
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: qurban-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    networks:
+      - qurban-network
+    command: tunnel --url http://frontend:80
+
 networks:
   qurban-network:
     driver: bridge
