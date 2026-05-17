@@ -46,8 +46,8 @@ copy .env.docker .env
 # 3. Build dan jalankan dengan Docker Compose
 docker-compose up --build
 
-# Jika frontend diakses dari IP host, pastikan CORS_ORIGIN berisi origin tersebut
-# contoh: CORS_ORIGIN=http://localhost,http://127.0.0.1,http://100.64.168.127
+# Jika frontend diakses dari IP host atau domain Cloudflare tunnel, pastikan CORS_ORIGIN berisi origin tersebut
+# contoh: CORS_ORIGIN=http://localhost,http://127.0.0.1,http://100.64.168.127,https://infections-send-searched-notified.trycloudflare.com
 
 # 4. Tunggu hingga semua service sehat (~30-60 detik)
 
@@ -379,7 +379,7 @@ MYSQL_HOST=localhost
 MYSQL_USER=root
 MYSQL_PASSWORD=password
 MYSQL_DATABASE=qurban_db
-CORS_ORIGIN=http://localhost:5173
+CORS_ORIGIN=http://localhost:5173,https://infections-send-searched-notified.trycloudflare.com
 ```
 
 **Docker (.env.docker)**
@@ -390,7 +390,7 @@ MYSQL_HOST=mysql
 MYSQL_USER=qurban_user
 MYSQL_PASSWORD=password
 MYSQL_DATABASE=qurban_db
-CORS_ORIGIN=http://localhost
+CORS_ORIGIN=http://localhost,https://infections-send-searched-notified.trycloudflare.com
 ```
 
 ### Building for Production
