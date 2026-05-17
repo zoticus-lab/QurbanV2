@@ -16,10 +16,11 @@ services:
     networks:
       - qurban-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
       timeout: 20s
       retries: 10
       interval: 10s
+      start_period: 40s
 
   # Backend API
   backend:
@@ -63,10 +64,11 @@ services:
     networks:
       - qurban-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
       timeout: 10s
       retries: 5
       interval: 10s
+      start_period: 20s
 
 networks:
   qurban-network:
