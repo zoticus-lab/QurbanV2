@@ -89,6 +89,10 @@ export const financeService = {
     api.post('/finance', data),
   getTransactions: () => 
     api.get('/finance'),
+  updateTransaction: (id, data) => 
+    api.put(`/finance/${id}`, data),
+  deleteTransaction: (id) => 
+    api.delete(`/finance/${id}`),
 };
 
 // Health check

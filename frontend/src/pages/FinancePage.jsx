@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowDownCircle, ArrowUpCircle, Upload, Image as ImageIcon, Save, List, Eye, X, Printer } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Upload, Image as ImageIcon, Save, List, Eye, X, Printer, Edit2, Trash2 } from 'lucide-react';
 import { financeService } from '../services/api';
 
 export default function FinancePage() {
@@ -7,10 +7,13 @@ export default function FinancePage() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
   const [useQty, setUseQty] = useState(false);
 
   const initialForm = {
+    type: 'pemasukan',
     title: '',
     amount: '',
     qty: 1,
@@ -20,10 +23,13 @@ export default function FinancePage() {
     goods_image: null
   };
   const [formData, setFormData] = useState(initialForm);
+  const [editFormData, setEditFormData] = useState(initialForm);
   const [customCategory, setCustomCategory] = useState('');
+  const [editCustomCategory, setEditCustomCategory] = useState('');
 
   const pemasukanCategories = ['Kas RT / RW', 'Iuran Warga / Ibu-Ibu', 'Donasi / Sukarela'];
   const pengeluaranCategories = ['Perlengkapan & Alat', 'Wadah Daging', 'Konsumsi', 'Operasional'];
+  const getCategoriesByType = (type) => (type === 'pemasukan' ? pemasukanCategories : pengeluaranCategories);
 
   useEffect(() => {
     if (activeTab === 'list') {
@@ -51,7 +57,7 @@ export default function FinancePage() {
     }
   };
 
-  const handleFileConvert = (e, fieldName) => {
+  const handleFileConvert = (e, fieldName, setTargetForm) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -83,12 +89,37 @@ export default function FinancePage() {
 
           // Kompresi ke format JPEG dengan kualitas 70%
           const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-          setFormData(prev => ({ ...prev, [fieldName]: compressedDataUrl }));
+          setTargetForm(prev => ({ ...prev, [fieldName]: compressedDataUrl }));
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const openEditModal = (transaction) => {
+    const categories = getCategoriesByType(transaction.type);
+    const categoryIsKnown = categories.includes(transaction.category);
+    const normalizedDate = String(transaction.transaction_date).split('T')[0];
+
+    setEditingTransaction(transaction);
+    setEditCustomCategory(categoryIsKnown ? '' : transaction.category);
+    setEditFormData({
+      type: transaction.type,
+      title: transaction.title,
+      amount: String(transaction.amount),
+      qty: 1,
+      transaction_date: normalizedDate,
+      category: categoryIsKnown ? transaction.category : 'Lainnya...',
+      proof_image: transaction.proof_image || null,
+      goods_image: transaction.goods_image || null
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingTransaction(null);
+    setEditFormData(initialForm);
+    setEditCustomCategory('');
   };
 
   const handleSubmit = async (e) => {
@@ -112,11 +143,51 @@ export default function FinancePage() {
         type: activeTab
       });
       alert(`✅ Data ${activeTab} berhasil disimpan!`);
+      setFormData(initialForm);
+      setCustomCategory('');
+      setUseQty(false);
       setActiveTab('list');
     } catch (error) {
       alert('❌ Gagal menyimpan data: ' + error.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleUpdateTransaction = async (e) => {
+    e.preventDefault();
+    if (!editingTransaction) return;
+
+    const finalCategory = editFormData.category === 'Lainnya...' ? editCustomCategory : editFormData.category;
+    if (!editFormData.title || !editFormData.amount || !finalCategory) return alert('Lengkapi data wajib!');
+
+    setEditSaving(true);
+    try {
+      await financeService.updateTransaction(editingTransaction.id, {
+        ...editFormData,
+        amount: Number(editFormData.amount),
+        category: finalCategory
+      });
+      alert('✅ Data transaksi berhasil diperbarui!');
+      closeEditModal();
+      await loadTransactions();
+    } catch (error) {
+      alert('❌ Gagal memperbarui data: ' + error.message);
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const handleDeleteTransaction = async (transaction) => {
+    const confirmed = window.confirm(`Hapus transaksi "${transaction.title}"? Tindakan ini tidak bisa dibatalkan.`);
+    if (!confirmed) return;
+
+    try {
+      await financeService.deleteTransaction(transaction.id);
+      alert('✅ Data transaksi berhasil dihapus!');
+      await loadTransactions();
+    } catch (error) {
+      alert('❌ Gagal menghapus data: ' + error.message);
     }
   };
 
@@ -297,6 +368,7 @@ export default function FinancePage() {
                     <th className="p-4 font-semibold text-sm">Kategori</th>
                     <th className="p-4 font-semibold text-sm">Masuk / Keluar</th>
                     <th className="p-4 font-semibold text-sm">Bukti</th>
+                    <th className="p-4 font-semibold text-sm">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
@@ -328,9 +400,25 @@ export default function FinancePage() {
                           </button>
                         )}
                       </td>
+                      <td className="p-4 text-sm">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => openEditModal(t)}
+                            className="flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-md transition-colors font-medium"
+                          >
+                            <Edit2 size={16} /> Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteTransaction(t)}
+                            className="flex items-center gap-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors font-medium"
+                          >
+                            <Trash2 size={16} /> Hapus
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
-                  {transactions.length === 0 && <tr><td colSpan="5" className="p-8 text-center text-gray-500">Belum ada riwayat transaksi.</td></tr>}
+                  {transactions.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">Belum ada riwayat transaksi.</td></tr>}
                 </tbody>
               </table>
             )}
@@ -443,10 +531,7 @@ export default function FinancePage() {
                       }}
                       className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white"
                     >
-                      {activeTab === 'pemasukan' 
-                        ? pemasukanCategories.map(c => <option key={c} value={c}>{c}</option>)
-                        : pengeluaranCategories.map(c => <option key={c} value={c}>{c}</option>)
-                      }
+                      {getCategoriesByType(activeTab).map(c => <option key={c} value={c}>{c}</option>)}
                       <option value="Lainnya...">Lainnya... (Ketik Sendiri)</option>
                     </select>
                     {formData.category === 'Lainnya...' && (
@@ -515,6 +600,164 @@ export default function FinancePage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Modal Edit Transaksi */}
+      {editingTransaction && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" onClick={closeEditModal}>
+          <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-gray-50">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">Edit Transaksi</h3>
+                <p className="text-sm text-gray-600">Perbarui data histori transaksi buku kas.</p>
+              </div>
+              <button
+                onClick={closeEditModal}
+                className="rounded-full p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateTransaction} className="p-6 md:p-8 space-y-6 max-h-[85vh] overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Jenis Transaksi</label>
+                    <select
+                      value={editFormData.type}
+                      onChange={(e) => {
+                        const nextType = e.target.value;
+                        const nextCategories = getCategoriesByType(nextType);
+                        setEditFormData(prev => ({
+                          ...prev,
+                          type: nextType,
+                          category: nextCategories[0]
+                        }));
+                        setEditCustomCategory('');
+                      }}
+                      className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="pemasukan">Pemasukan</option>
+                      <option value="pengeluaran">Pengeluaran</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Judul / Keterangan</label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.title}
+                      onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                      className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nominal (Rp)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={editFormData.amount}
+                      onChange={(e) => setEditFormData({ ...editFormData, amount: e.target.value })}
+                      className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal</label>
+                      <input
+                        type="date"
+                        required
+                        value={editFormData.transaction_date}
+                        onChange={(e) => setEditFormData({ ...editFormData, transaction_date: e.target.value })}
+                        className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Kategori</label>
+                      <select
+                        required={!editCustomCategory}
+                        value={editFormData.category}
+                        onChange={(e) => {
+                          setEditFormData({ ...editFormData, category: e.target.value });
+                          if (e.target.value !== 'Lainnya...') setEditCustomCategory('');
+                        }}
+                        className="w-full p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white"
+                      >
+                        {getCategoriesByType(editFormData.type).map(c => <option key={c} value={c}>{c}</option>)}
+                        <option value="Lainnya...">Lainnya... (Ketik Sendiri)</option>
+                      </select>
+                      {editFormData.category === 'Lainnya...' && (
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ketik kategori baru..."
+                          value={editCustomCategory}
+                          onChange={(e) => setEditCustomCategory(e.target.value)}
+                          className="w-full mt-2 p-2.5 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <p className="font-semibold text-gray-800">Lampiran & Dokumentasi</p>
+
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-2">Upload Bukti Transaksi (Opsional)</label>
+                    <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[120px] overflow-hidden group">
+                      <input type="file" accept="image/*" onChange={(e) => handleFileConvert(e, 'proof_image', setEditFormData)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                      {editFormData.proof_image ? (
+                        <img src={editFormData.proof_image} alt="Bukti" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                      ) : (
+                        <Upload className="text-gray-400 mb-2" size={24} />
+                      )}
+                      <span className="text-sm font-medium text-gray-700 bg-white/80 px-2 py-1 rounded relative z-0 pointer-events-none">
+                        {editFormData.proof_image ? 'Klik untuk mengganti foto' : 'Pilih Foto / Ambil Gambar'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {editFormData.type === 'pengeluaran' && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-600 mb-2 mt-4">Upload Foto Barang Fisik / Kegiatan (Opsional)</label>
+                      <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[120px] overflow-hidden group">
+                        <input type="file" accept="image/*" onChange={(e) => handleFileConvert(e, 'goods_image', setEditFormData)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        {editFormData.goods_image ? (
+                          <img src={editFormData.goods_image} alt="Barang" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
+                        ) : (
+                          <ImageIcon className="text-gray-400 mb-2" size={24} />
+                        )}
+                        <span className="text-sm font-medium text-gray-700 bg-white/80 px-2 py-1 rounded relative z-0 pointer-events-none">
+                          {editFormData.goods_image ? 'Klik untuk mengganti foto' : 'Pilih Foto / Ambil Gambar'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-gray-200 flex flex-col sm:flex-row gap-3 justify-end">
+                <button type="button" onClick={closeEditModal} className="px-5 py-3 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSaving}
+                  className="px-5 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  <Save size={20} />
+                  {editSaving ? 'Menyimpan Perubahan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
