@@ -10,6 +10,7 @@ export default function FinancePage() {
   const [editSaving, setEditSaving] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
   const [useQty, setUseQty] = useState(false);
 
   const initialForm = {
@@ -179,15 +180,18 @@ export default function FinancePage() {
   };
 
   const handleDeleteTransaction = async (transaction) => {
-    const confirmed = window.confirm(`Hapus transaksi "${transaction.title}"? Tindakan ini tidak bisa dibatalkan.`);
-    if (!confirmed) return;
-
+    // Hapus langsung tanpa konfirmasi pop-up
+    if (!transaction?.id) return;
+    setDeletingId(transaction.id);
     try {
       await financeService.deleteTransaction(transaction.id);
       alert('✅ Data transaksi berhasil dihapus!');
       await loadTransactions();
     } catch (error) {
-      alert('❌ Gagal menghapus data: ' + error.message);
+      console.error('Delete error:', error);
+      alert('❌ Gagal menghapus data: ' + (error?.response?.data?.error || error.message));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -415,14 +419,15 @@ export default function FinancePage() {
                           </button>
                           <button
                             type="button"
+                            disabled={deletingId === t.id}
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
                               handleDeleteTransaction(t);
                             }}
-                            className="flex items-center gap-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors font-medium"
+                            className={`flex items-center gap-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors font-medium ${deletingId === t.id ? 'opacity-60 cursor-not-allowed' : ''}`}
                           >
-                            <Trash2 size={16} /> Hapus
+                            <Trash2 size={16} /> {deletingId === t.id ? 'Menghapus...' : 'Hapus'}
                           </button>
                         </div>
                       </td>
