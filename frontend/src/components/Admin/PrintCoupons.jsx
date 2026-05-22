@@ -4,13 +4,15 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { couponService } from '../../services/api';
 import CouponLayout from './CouponLayout';
+import defaultBackground from '../../assets/coupon-default-bg.svg';
 
 export default function PrintCoupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [error, setError] = useState(null);
-  const [backgroundImage, setBackgroundImage] = useState(null);
+  const [backgroundImage, setBackgroundImage] = useState(defaultBackground);
+  const [printScope, setPrintScope] = useState('all');
   const fileInputRef = useRef(null);
 
   // State untuk kustomisasi kupon
@@ -26,6 +28,8 @@ export default function PrintCoupons() {
   const [panitiaRw, setPanitiaRw] = useState('04');
   const [bgOpacity, setBgOpacity] = useState(20); // Default transparan 20%
   const [bgSize, setBgSize] = useState(100); // Default ukuran 100%
+
+  const couponsToPrint = printScope === 'page' ? coupons.slice(0, 10) : coupons;
 
   const loadCoupons = async () => {
     setLoading(true);
@@ -51,6 +55,10 @@ export default function PrintCoupons() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const resetBackground = () => {
+    setBackgroundImage(defaultBackground);
   };
 
   const handleDownloadPDF = async () => {
@@ -162,6 +170,28 @@ export default function PrintCoupons() {
                 <h4 className="font-semibold text-gray-800">Kustomisasi Kupon</h4>
               </div>
               <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3 border-b border-gray-200 pb-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-700 mb-1">Mode Cetak</label>
+                    <select
+                      value={printScope}
+                      onChange={(e) => setPrintScope(e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:ring-green-500 focus:border-green-500"
+                    >
+                      <option value="all">Seluruh voucher</option>
+                      <option value="page">1 halaman pertama</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end">
+                    <button
+                      type="button"
+                      onClick={resetBackground}
+                      className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      Pakai background default
+                    </button>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 gap-3 border-b border-gray-200 pb-3">
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-1">Judul Kupon</label>
@@ -324,7 +354,7 @@ export default function PrintCoupons() {
               </h3>
               <div id="coupon-layout">
                 <CouponLayout 
-                  coupons={coupons} 
+                  coupons={couponsToPrint} 
                   backgroundImage={backgroundImage} 
                   couponTitle={couponTitle}
                   titleSize={titleSize}

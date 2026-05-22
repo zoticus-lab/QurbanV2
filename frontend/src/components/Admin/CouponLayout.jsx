@@ -16,7 +16,6 @@ export default function CouponLayout({
   panitiaRw = '04',
   bgOpacity = 20,
   bgSize = 100,
-  watermarkText = 'ASLI'
 }) {
   const chunkedCoupons = [];
   for (let i = 0; i < coupons.length; i += 10) {
@@ -59,7 +58,6 @@ export default function CouponLayout({
               panitiaRw={panitiaRw}
               bgOpacity={bgOpacity}
               bgSize={bgSize}
-              watermarkText={watermarkText}
             />
           ))}
         </div>
@@ -68,7 +66,7 @@ export default function CouponLayout({
   );
 }
 
-function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize, watermarkText }) {
+function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize }) {
   return (
     <div
       className="border border-gray-400 rounded-md p-2 flex flex-col items-center justify-between text-center relative overflow-hidden bg-white"
@@ -78,15 +76,6 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
         boxSizing: 'border-box',
       }}
     >
-      {/* Watermark Text Layer */}
-      {watermarkText && (
-        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-10 select-none">
-          <span className="text-6xl font-black text-gray-900 transform -rotate-45 whitespace-nowrap tracking-widest">
-            {watermarkText}
-          </span>
-        </div>
-      )}
-
       {/* Background Image Layer */}
       {backgroundImage && (
         <div 
