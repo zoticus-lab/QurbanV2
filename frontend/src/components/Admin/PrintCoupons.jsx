@@ -62,7 +62,7 @@ export default function PrintCoupons() {
 
     try {
       setGeneratingPdf(true);
-      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
       
       const pdfWidth = pdf.internal.pageSize.getWidth(); // Lebar A4 (210 mm)
       const pdfHeight = pdf.internal.pageSize.getHeight(); // Tinggi A4 (297 mm)
@@ -70,16 +70,34 @@ export default function PrintCoupons() {
       // Render dan tambahkan setiap halaman secara terpisah
       for (let i = 0; i < pages.length; i++) {
         const canvas = await html2canvas(pages[i], { 
-          scale: 3, // Resolusi lebih tinggi agar tidak buram
-          useCORS: true // Membantu memuat gambar eksternal dengan baik
+          scale: 4,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          windowWidth: pages[i].scrollWidth,
+          windowHeight: pages[i].scrollHeight,
         });
         const imgData = canvas.toDataURL('image/png', 1.0); // Kualitas maksimal
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgRatio = imgProps.width / imgProps.height;
+        const pageRatio = pdfWidth / pdfHeight;
+        let drawWidth = pdfWidth;
+        let drawHeight = pdfHeight;
+
+        if (imgRatio > pageRatio) {
+          drawHeight = pdfWidth / imgRatio;
+        } else {
+          drawWidth = pdfHeight * imgRatio;
+        }
+
+        const offsetX = (pdfWidth - drawWidth) / 2;
+        const offsetY = (pdfHeight - drawHeight) / 2;
         
         if (i > 0) {
           pdf.addPage();
         }
         
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'PNG', offsetX, offsetY, drawWidth, drawHeight);
       }
 
       pdf.save('kupon-kurban.pdf');

@@ -28,15 +28,17 @@ export default function CouponLayout({
       {chunkedCoupons.map((page, pageIndex) => (
         <div
           key={pageIndex}
-          className="bg-white p-6 rounded-lg coupon-page"
+          className="bg-white coupon-page"
           style={{
             width: '210mm',
             height: '297mm',
             margin: '0 auto',
+            padding: '8mm',
+            boxSizing: 'border-box',
             display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gridTemplateRows: 'repeat(5, 1fr)',
-            gap: '12px',
+            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+            gridTemplateRows: 'repeat(5, minmax(0, 1fr))',
+            gap: '6px',
             pageBreakAfter: 'always',
           }}
         >
@@ -69,9 +71,11 @@ export default function CouponLayout({
 function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize, watermarkText }) {
   return (
     <div
-      className="border-2 border-gray-400 rounded-lg p-3 flex flex-col items-center justify-between text-center relative overflow-hidden bg-white"
+      className="border border-gray-400 rounded-md p-2 flex flex-col items-center justify-between text-center relative overflow-hidden bg-white"
       style={{
-        minHeight: '140px',
+        minHeight: '0',
+        height: '100%',
+        boxSizing: 'border-box',
       }}
     >
       {/* Watermark Text Layer */}
@@ -100,43 +104,43 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
       <div className="relative z-10 w-full flex flex-col items-center gap-1.5">
         {/* Render QR di Atas (jika dipilih) */}
         {qrPosition === 'top' && (
-          <div className="mt-1">
+          <div className="mt-0.5">
             <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
           </div>
         )}
 
         {/* Judul Kupon */}
         <div 
-          className="font-black text-gray-900 leading-none tracking-tight text-center px-1 w-full uppercase"
-          style={{ fontSize: `${titleSize}px` }}
+          className="font-black text-gray-900 leading-none tracking-tight text-center px-1 w-full uppercase break-words"
+          style={{ fontSize: `${Math.min(titleSize, 22)}px`, wordBreak: 'break-word' }}
         >
           {couponTitle}
         </div>
 
         {/* Render QR di Bawah (jika dipilih) */}
         {qrPosition === 'bottom' && (
-          <div className="my-1">
+          <div className="my-0.5">
             <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
           </div>
         )}
 
         {/* Detail Info */}
-        <div className="text-center w-full mt-1">
-          <div className="font-bold text-gray-900 text-xs leading-tight truncate px-1">{masjidName}</div>
-          <div className="text-[10px] text-gray-800 font-medium leading-tight">
+        <div className="text-center w-full mt-0.5 space-y-0.5">
+          <div className="font-bold text-gray-900 text-[10px] leading-tight px-1 break-words whitespace-normal">{masjidName}</div>
+          <div className="text-[9px] text-gray-800 font-medium leading-tight">
             RW {panitiaRw} | RT {panitiaRt}
           </div>
-          <div className="text-[9px] text-gray-600 leading-tight mt-0.5">
+          <div className="text-[8px] text-gray-600 leading-tight">
             {couponDate} • {eventTime}
           </div>
-          <div className="text-[9px] text-gray-600 leading-tight truncate px-1 mt-0.5">
+          <div className="text-[8px] text-gray-600 leading-tight px-1 break-words whitespace-normal">
             {eventAddress}
           </div>
         </div>
       </div>
 
       {/* Nomor Urut / Serial ID di Ujung Kanan Bawah */}
-      <div className="absolute bottom-1.5 right-1.5 font-mono text-[7px] text-gray-500 font-bold opacity-80 z-20">
+      <div className="absolute bottom-1 right-1 font-mono text-[6px] text-gray-500 font-bold opacity-80 z-20 max-w-[70%] text-right break-all">
         {coupon.no_urut}-{panitiaRw}-{panitiaRt}-{new Date().getFullYear()}-{masjidName.replace(/\s+/g, '_').toUpperCase()}
       </div>
     </div>
