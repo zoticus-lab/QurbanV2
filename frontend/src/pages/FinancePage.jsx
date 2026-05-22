@@ -403,13 +403,23 @@ export default function FinancePage() {
                       <td className="p-4 text-sm">
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => openEditModal(t)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              openEditModal(t);
+                            }}
                             className="flex items-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-1.5 rounded-md transition-colors font-medium"
                           >
                             <Edit2 size={16} /> Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteTransaction(t)}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteTransaction(t);
+                            }}
                             className="flex items-center gap-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-1.5 rounded-md transition-colors font-medium"
                           >
                             <Trash2 size={16} /> Hapus
