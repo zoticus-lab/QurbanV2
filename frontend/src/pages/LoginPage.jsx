@@ -5,8 +5,8 @@ import axios from 'axios';
 const API_URL = '/api';
 
 export default function LoginPage({ onLoginSuccess }) {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -126,18 +126,6 @@ export default function LoginPage({ onLoginSuccess }) {
               )}
             </button>
           </form>
-
-          {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-sm font-semibold text-blue-900 mb-2">🔐 Demo Credentials</p>
-            <p className="text-xs text-blue-800">
-              <strong>Username:</strong> admin<br />
-              <strong>Password:</strong> admin123
-            </p>
-            <p className="text-xs text-blue-700 mt-2">
-              💡 Ubah password setelah login pertama kali!
-            </p>
-          </div>
 
           {/* Info */}
           <div className="mt-6 text-center text-sm text-gray-600">
