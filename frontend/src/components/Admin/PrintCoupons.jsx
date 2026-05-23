@@ -426,6 +426,14 @@ export default function PrintCoupons() {
               )}
             </button>
 
+            <button
+              onClick={handlePrintBrowser}
+              disabled={coupons.length === 0}
+              className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white font-semibold py-2 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+            >
+              Cetak ke PDF (Browser)
+            </button>
+
             <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
               <strong>Layout:</strong> 10 kupon per lembar (2 kolom x 5 baris)
             </div>
