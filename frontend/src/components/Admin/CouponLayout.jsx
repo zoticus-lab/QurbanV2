@@ -14,60 +14,21 @@ export default function CouponLayout({
   qrPosition = 'top',
   panitiaRt = '07',
   panitiaRw = '04',
-  bgOpacity = 20,
-  bgSize = 100,
-}) {
-  const chunkedCoupons = [];
-  for (let i = 0; i < coupons.length; i += 10) {
-    chunkedCoupons.push(coupons.slice(i, i + 10));
-  }
-
-  return (
-    <div className="space-y-8">
-      {chunkedCoupons.map((page, pageIndex) => (
-        <div
-          key={pageIndex}
-          className="bg-white coupon-page"
-          style={{
-            width: '210mm',
-            height: '297mm',
-            margin: '0 auto',
-            padding: '8mm',
-            boxSizing: 'border-box',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gridTemplateRows: 'repeat(5, minmax(0, 1fr))',
-            gap: '6px',
-            pageBreakAfter: 'always',
-          }}
-        >
-          {page.map((coupon, idx) => (
-            <CouponCard
-              key={idx}
-              coupon={coupon}
-              couponTitle={couponTitle}
-              titleSize={titleSize}
-              backgroundImage={backgroundImage}
-              masjidName={masjidName}
-              couponDate={couponDate}
-              eventTime={eventTime}
-              eventAddress={eventAddress}
-              qrSize={qrSize}
-              qrPosition={qrPosition}
-              panitiaRt={panitiaRt}
-              panitiaRw={panitiaRw}
-              bgOpacity={bgOpacity}
-              bgSize={bgSize}
-            />
-          ))}
+      <div className="relative z-10 w-full flex items-center gap-3 px-2">
+        {/* Left: main info (aligned left, vertically centered) */}
+        <div className="flex-1 text-left">
+          <div className="uppercase" style={{ fontSize: `${Math.min(titleSize, 26)}px`, fontWeight: 900, color: '#000' }}>{couponTitle}</div>
+          <div className="mt-1" style={{ fontSize: '12px', fontWeight: 800, color: '#000' }}>{masjidName}</div>
+          <div className="mt-1" style={{ fontSize: '11px', fontWeight: 800, color: '#000' }}>RW {panitiaRw} | RT {panitiaRt}</div>
+          <div className="mt-1" style={{ fontSize: '10px', color: '#000' }}>{couponDate} • {eventTime}</div>
+          <div className="mt-1 break-words" style={{ fontSize: '10px', color: '#000' }}>{eventAddress}</div>
         </div>
-      ))}
-    </div>
-  );
-}
 
-function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize }) {
-  return (
+        {/* Right: QR / barcode */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: qrSize + 20 }}>
+          <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
+        </div>
+      </div>
     <div
       className="border border-gray-400 rounded-md p-2 flex flex-col items-center justify-between text-center relative overflow-hidden bg-white"
       style={{
@@ -90,6 +51,7 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
         ></div>
       )}
 
+<<<<<<< HEAD
       <div className="relative z-10 w-full flex flex-col items-center gap-1.5">
         {/* Render QR di Atas (jika dipilih) */}
         {qrPosition === 'top' && (
@@ -125,13 +87,28 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
           <div className="text-[8px] text-gray-600 leading-tight px-1 break-words whitespace-normal">
             {eventAddress}
           </div>
+=======
+      <div className="relative z-10 w-full flex items-center gap-3 px-2">
+        {/* Left: main info (aligned left, vertically centered) */}
+        <div className="flex-1 text-left">
+          <div className="uppercase" style={{ fontSize: `${titleSize}px`, fontWeight: 900, color: '#000' }}>{couponTitle}</div>
+          <div className="mt-1" style={{ fontSize: '12px', fontWeight: 800, color: '#000' }}>{masjidName}</div>
+          <div className="mt-1" style={{ fontSize: '11px', fontWeight: 800, color: '#000' }}>RW {panitiaRw} | RT {panitiaRt}</div>
+          <div className="mt-1" style={{ fontSize: '10px', color: '#000' }}>{couponDate} • {eventTime}</div>
+          <div className="mt-1 truncate" style={{ fontSize: '10px', color: '#000' }}>{eventAddress}</div>
+        </div>
+
+        {/* Right: QR / barcode */}
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: qrSize + 20 }}>
+          <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
+>>>>>>> 723aceb (feat: ID-card style coupon layout; emphasize text and serial badge)
         </div>
       </div>
 
       {/* Nomor Urut / Serial ID di Ujung Kanan Bawah */}
-      <div className="absolute bottom-1 right-1 font-mono text-[6px] text-gray-500 font-bold opacity-80 z-20 max-w-[70%] text-right break-all">
-        {coupon.no_urut}-{panitiaRw}-{panitiaRt}-{new Date().getFullYear()}-{masjidName.replace(/\s+/g, '_').toUpperCase()}
-      </div>
+  <div className="absolute bottom-2 right-2 font-mono text-[11px] text-black font-extrabold z-20 px-2 py-1 bg-white/95 border border-gray-300 rounded-md shadow-sm">
+    {coupon.no_urut}-{panitiaRw}-{panitiaRt}-{new Date().getFullYear()}-{masjidName.replace(/\s+/g, '_').toUpperCase()}
+  </div>
     </div>
   );
 }
