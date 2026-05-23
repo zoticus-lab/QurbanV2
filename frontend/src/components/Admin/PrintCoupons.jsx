@@ -70,28 +70,59 @@ export default function PrintCoupons() {
 
     try {
       setGeneratingPdf(true);
+
+      // Wait for fonts to be ready (helps with text rendering)
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+
       const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4', compress: true });
-      
-      const pdfWidth = pdf.internal.pageSize.getWidth(); // Lebar A4 (210 mm)
-      const pdfHeight = pdf.internal.pageSize.getHeight(); // Tinggi A4 (297 mm)
-      
-      // Render dan tambahkan setiap halaman secara terpisah
+      const pdfWidth = pdf.internal.pageSize.getWidth(); // 210
+      const pdfHeight = pdf.internal.pageSize.getHeight(); // 297
+
+      // Convert mm to px using 96dpi assumption
+      const mmToPx = (mm) => Math.round(mm * (96 / 25.4));
+      const pxWidth = mmToPx(pdfWidth);
+      const pxHeight = mmToPx(pdfHeight);
+
       for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], { 
-          scale: 4,
+        // Clone page into an offscreen container sized to A4 in px to get consistent rendering
+        const clone = pages[i].cloneNode(true);
+        const wrapper = document.createElement('div');
+        wrapper.style.width = pxWidth + 'px';
+        wrapper.style.height = pxHeight + 'px';
+        wrapper.style.boxSizing = 'border-box';
+        wrapper.style.background = '#ffffff';
+        wrapper.style.position = 'fixed';
+        wrapper.style.left = '-9999px';
+        wrapper.style.top = '0';
+        wrapper.appendChild(clone);
+        document.body.appendChild(wrapper);
+
+        // Use devicePixelRatio to increase clarity
+        const scale = Math.max(2, window.devicePixelRatio || 1);
+
+        const canvas = await html2canvas(wrapper, {
+          scale,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false,
-          windowWidth: pages[i].scrollWidth,
-          windowHeight: pages[i].scrollHeight,
+          width: pxWidth,
+          height: pxHeight,
+          windowWidth: pxWidth,
+          windowHeight: pxHeight,
         });
-        const imgData = canvas.toDataURL('image/png', 1.0); // Kualitas maksimal
+
+        document.body.removeChild(wrapper);
+
+        const imgData = canvas.toDataURL('image/png', 1.0);
+
+        // Calculate image size in mm to preserve aspect ratio
         const imgProps = pdf.getImageProperties(imgData);
         const imgRatio = imgProps.width / imgProps.height;
         const pageRatio = pdfWidth / pdfHeight;
         let drawWidth = pdfWidth;
         let drawHeight = pdfHeight;
-
         if (imgRatio > pageRatio) {
           drawHeight = pdfWidth / imgRatio;
         } else {
@@ -100,18 +131,15 @@ export default function PrintCoupons() {
 
         const offsetX = (pdfWidth - drawWidth) / 2;
         const offsetY = (pdfHeight - drawHeight) / 2;
-        
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
+
+        if (i > 0) pdf.addPage();
         pdf.addImage(imgData, 'PNG', offsetX, offsetY, drawWidth, drawHeight);
       }
 
       pdf.save('kupon-kurban.pdf');
     } catch (error) {
       console.error('Error generating PDF:', error);
-      alert('Gagal membuat PDF: ' + error.message);
+      alert('Gagal membuat PDF: ' + (error.message || error));
     } finally {
       setGeneratingPdf(false);
     }
