@@ -15,8 +15,7 @@ export default function CouponLayout({
   panitiaRt = '07',
   panitiaRw = '04',
   bgOpacity = 20,
-  bgSize = 100,
-  watermarkText = 'ASLI'
+  bgSize = 100
 }) {
   const chunkedCoupons = [];
   for (let i = 0; i < coupons.length; i += 10) {
@@ -57,7 +56,6 @@ export default function CouponLayout({
               panitiaRw={panitiaRw}
               bgOpacity={bgOpacity}
               bgSize={bgSize}
-              watermarkText={watermarkText}
             />
           ))}
         </div>
@@ -66,23 +64,14 @@ export default function CouponLayout({
   );
 }
 
-function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize, watermarkText }) {
+function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize }) {
   return (
     <div
-      className="border-2 border-gray-400 rounded-lg p-3 flex flex-col justify-between relative overflow-hidden bg-white"
+      className="border-2 border-gray-400 rounded-lg p-2.5 flex flex-col justify-between relative overflow-hidden bg-white"
       style={{
-        minHeight: '140px',
+        minHeight: '138px',
       }}
     >
-      {/* Watermark Text Layer */}
-      {watermarkText && (
-        <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-10 select-none">
-          <span className="text-6xl font-black text-gray-900 transform -rotate-45 whitespace-nowrap tracking-widest">
-            {watermarkText}
-          </span>
-        </div>
-      )}
-
       {/* Background Image Layer */}
       {backgroundImage && (
         <div 
@@ -97,24 +86,24 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
         ></div>
       )}
 
-      <div className="relative z-10 w-full flex items-center gap-3 px-2">
+      <div className="relative z-10 w-full flex items-center gap-2.5 px-1.5">
         {/* Left: main info (aligned left, vertically centered) */}
-        <div className="flex-1 text-left">
-          <div className="uppercase" style={{ fontSize: `${Math.min(titleSize, 26)}px`, fontWeight: 900, color: '#000' }}>{couponTitle}</div>
-          <div className="mt-1" style={{ fontSize: '12px', fontWeight: 800, color: '#000' }}>{masjidName}</div>
-          <div className="mt-1" style={{ fontSize: '11px', fontWeight: 800, color: '#000' }}>RW {panitiaRw} | RT {panitiaRt}</div>
-          <div className="mt-1" style={{ fontSize: '10px', color: '#000' }}>{couponDate} • {eventTime}</div>
-          <div className="mt-1 break-words" style={{ fontSize: '10px', color: '#000' }}>{eventAddress}</div>
+        <div className="flex-1 min-w-0 text-left leading-tight">
+          <div className="uppercase truncate" style={{ fontSize: `${Math.min(titleSize, 24)}px`, fontWeight: 900, color: '#000', lineHeight: 1 }}>{couponTitle}</div>
+          <div className="mt-1 truncate" style={{ fontSize: '12px', fontWeight: 800, color: '#000', lineHeight: 1.1 }}>{masjidName}</div>
+          <div className="mt-1" style={{ fontSize: '11px', fontWeight: 800, color: '#000', lineHeight: 1.1 }}>RW {panitiaRw} | RT {panitiaRt}</div>
+          <div className="mt-1 truncate" style={{ fontSize: '9.5px', color: '#000', lineHeight: 1.1 }}>{couponDate} • {eventTime}</div>
+          <div className="mt-1 truncate" style={{ fontSize: '9.5px', color: '#000', lineHeight: 1.1 }}>{eventAddress}</div>
         </div>
 
         {/* Right: QR / barcode */}
-        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: qrSize + 20 }}>
+        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: qrSize + 14 }}>
           <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
         </div>
       </div>
 
       {/* Nomor Urut / Serial ID di Ujung Kanan Bawah */}
-      <div className="absolute bottom-2 right-2 font-mono text-[11px] text-black font-extrabold z-20 px-2 py-1 bg-white/95 border border-gray-300 rounded-md shadow-sm">
+      <div className="absolute bottom-2 right-2 font-mono text-[10px] text-black font-extrabold z-20 px-2 py-0.5 bg-white/95 border border-gray-300 rounded-md shadow-sm tracking-wide">
         {coupon.no_urut}-{panitiaRw}-{panitiaRt}-{new Date().getFullYear()}-{masjidName.replace(/\s+/g, '_').toUpperCase()}
       </div>
     </div>
