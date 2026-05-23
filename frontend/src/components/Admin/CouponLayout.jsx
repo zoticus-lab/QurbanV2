@@ -67,7 +67,7 @@ export default function CouponLayout({
 function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidName, couponDate, eventTime, eventAddress, qrSize, qrPosition, panitiaRt, panitiaRw, bgOpacity, bgSize }) {
   return (
     <div
-      className="border-2 border-gray-400 rounded-lg p-2.5 flex flex-col justify-between relative overflow-hidden bg-white"
+      className="border-2 border-gray-400 rounded-lg p-2.5 flex flex-col relative overflow-hidden bg-white"
       style={{
         minHeight: '138px',
       }}
@@ -86,9 +86,9 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
         ></div>
       )}
 
-      <div className="relative z-10 w-full flex items-center gap-2.5 px-1.5">
+      <div className="relative z-10 flex-1 w-full flex items-center justify-center gap-3 px-3 py-2">
         {/* Left: main info (aligned left, vertically centered) */}
-        <div className="flex-1 min-w-0 text-left leading-tight">
+        <div className="flex-1 min-w-0 text-left leading-tight pr-1">
           <div className="uppercase truncate" style={{ fontSize: `${Math.min(titleSize, 24)}px`, fontWeight: 900, color: '#000', lineHeight: 1 }}>{couponTitle}</div>
           <div className="mt-1 truncate" style={{ fontSize: '12px', fontWeight: 800, color: '#000', lineHeight: 1.1 }}>{masjidName}</div>
           <div className="mt-1" style={{ fontSize: '11px', fontWeight: 800, color: '#000', lineHeight: 1.1 }}>RW {panitiaRw} | RT {panitiaRt}</div>
@@ -97,7 +97,7 @@ function CouponCard({ coupon, backgroundImage, couponTitle, titleSize, masjidNam
         </div>
 
         {/* Right: QR / barcode */}
-        <div className="flex-shrink-0 flex items-center justify-center" style={{ width: qrSize + 14 }}>
+        <div className="flex-shrink-0 flex items-center justify-center ml-1" style={{ width: qrSize + 14 }}>
           <QRCodeComponent qrSecret={coupon.qr_secret} size={qrSize} />
         </div>
       </div>
