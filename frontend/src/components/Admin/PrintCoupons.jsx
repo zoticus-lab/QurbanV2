@@ -183,6 +183,31 @@ export default function PrintCoupons() {
     wrapper.style.width = '210mm';
     wrapper.style.height = '297mm';
     wrapper.style.boxSizing = 'border-box';
+    wrapper.style.position = 'relative';
+
+    // If a background image is set, add it as an <img> so browsers will print it
+    try {
+      if (backgroundImage) {
+        const bgImg = document.createElement('img');
+        bgImg.src = backgroundImage;
+        bgImg.alt = '';
+        bgImg.style.position = 'absolute';
+        bgImg.style.left = '0';
+        bgImg.style.top = '0';
+        bgImg.style.width = '100%';
+        bgImg.style.height = '100%';
+        bgImg.style.objectFit = 'cover';
+        bgImg.style.zIndex = '0';
+        bgImg.className = 'print-bg-image';
+        wrapper.appendChild(bgImg);
+      }
+    } catch (e) {
+      console.error('Error adding background image for print:', e);
+    }
+
+    // Ensure cloned content sits above the background image
+    clone.style.position = 'relative';
+    clone.style.zIndex = '1';
     wrapper.appendChild(clone);
 
     const style = document.createElement('style');
@@ -192,6 +217,8 @@ export default function PrintCoupons() {
         body * { visibility: hidden !important; }
         .print-area, .print-area * { visibility: visible !important; }
         .print-area { position: absolute !important; left: 0; top: 0; width: 210mm; height: 297mm; }
+        .print-area img.print-bg-image { display: block !important; }
+        .print-area, .print-area * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         @page { size: A4; margin: 10mm; }
       }
     `;
@@ -204,9 +231,9 @@ export default function PrintCoupons() {
       window.print();
     } finally {
       // cleanup after print
-      document.body.removeChild(wrapper);
+      try { document.body.removeChild(wrapper); } catch (e) {}
       const s = document.getElementById('print-area-style');
-      if (s) document.body.removeChild(s);
+      if (s) try { document.body.removeChild(s); } catch (e) {}
     }
   };
 
@@ -408,23 +435,7 @@ export default function PrintCoupons() {
               </div>
             </div>
 
-            <button
-              onClick={handleDownloadPDF}
-              disabled={coupons.length === 0 || generatingPdf}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
-            >
-              {generatingPdf ? (
-                <>
-                  <Loader className="animate-spin" size={20} />
-                  Membuat PDF...
-                </>
-              ) : (
-                <>
-                  <Download size={20} />
-                  Download PDF A4
-                </>
-              )}
-            </button>
+            {/* Download PDF (programmatic) removed — use browser print fallback */}
 
             <button
               onClick={handlePrintBrowser}
