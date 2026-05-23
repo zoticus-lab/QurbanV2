@@ -169,6 +169,47 @@ export default function PrintCoupons() {
     }
   };
 
+  // Fallback: use browser print (better rendering for complex CSS)
+  const handlePrintBrowser = async () => {
+    const layout = document.getElementById('coupon-layout');
+    if (!layout) {
+      alert('Layout tidak ditemukan');
+      return;
+    }
+
+    const clone = layout.cloneNode(true);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'print-area';
+    wrapper.style.width = '210mm';
+    wrapper.style.height = '297mm';
+    wrapper.style.boxSizing = 'border-box';
+    wrapper.appendChild(clone);
+
+    const style = document.createElement('style');
+    style.id = 'print-area-style';
+    style.innerHTML = `
+      @media print {
+        body * { visibility: hidden !important; }
+        .print-area, .print-area * { visibility: visible !important; }
+        .print-area { position: absolute !important; left: 0; top: 0; width: 210mm; height: 297mm; }
+        @page { size: A4; margin: 10mm; }
+      }
+    `;
+
+    document.body.appendChild(style);
+    document.body.appendChild(wrapper);
+
+    try {
+      if (document.fonts && document.fonts.ready) await document.fonts.ready;
+      window.print();
+    } finally {
+      // cleanup after print
+      document.body.removeChild(wrapper);
+      const s = document.getElementById('print-area-style');
+      if (s) document.body.removeChild(s);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
