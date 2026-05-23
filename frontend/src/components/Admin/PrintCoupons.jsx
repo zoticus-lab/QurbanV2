@@ -86,8 +86,12 @@ export default function PrintCoupons() {
       const pxHeight = mmToPx(pdfHeight);
 
       for (let i = 0; i < pages.length; i++) {
-        // Clone page into an offscreen container sized to A4 in px to get consistent rendering
-        const clone = pages[i].cloneNode(true);
+        // Original page size
+        const pageEl = pages[i];
+        const pageWidth = pageEl.scrollWidth;
+        const pageHeight = pageEl.scrollHeight;
+
+        // Create offscreen wrapper sized to A4 in pixels
         const wrapper = document.createElement('div');
         wrapper.style.width = pxWidth + 'px';
         wrapper.style.height = pxHeight + 'px';
@@ -96,28 +100,50 @@ export default function PrintCoupons() {
         wrapper.style.position = 'fixed';
         wrapper.style.left = '-9999px';
         wrapper.style.top = '0';
-        wrapper.appendChild(clone);
+
+        // Clone and place inside an inner container we can scale
+        const inner = document.createElement('div');
+        inner.style.transformOrigin = 'top left';
+        inner.style.width = pageWidth + 'px';
+        inner.style.height = pageHeight + 'px';
+        inner.style.boxSizing = 'border-box';
+
+        const clone = pageEl.cloneNode(true);
+        // Ensure clone has same display width for proper scaling
+        clone.style.width = pageWidth + 'px';
+        clone.style.boxSizing = 'border-box';
+
+        inner.appendChild(clone);
+        wrapper.appendChild(inner);
         document.body.appendChild(wrapper);
 
-        // Use devicePixelRatio to increase clarity
-        const scale = Math.max(2, window.devicePixelRatio || 1);
+        // Compute scale to fit A4 area
+        const scale = Math.min(pxWidth / pageWidth, pxHeight / pageHeight);
+        // Apply scale (do not scale further by DPR; let html2canvas capture at higher quality via scale option)
+        inner.style.transform = `scale(${scale})`;
+
+        // Calculate final canvas pixel size to request from html2canvas
+        const canvasWidth = Math.round(pageWidth * scale);
+        const canvasHeight = Math.round(pageHeight * scale);
+
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
 
         const canvas = await html2canvas(wrapper, {
-          scale,
+          scale: dpr,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false,
-          width: pxWidth,
-          height: pxHeight,
-          windowWidth: pxWidth,
-          windowHeight: pxHeight,
+          width: canvasWidth,
+          height: canvasHeight,
+          windowWidth: canvasWidth,
+          windowHeight: canvasHeight,
         });
 
         document.body.removeChild(wrapper);
 
         const imgData = canvas.toDataURL('image/png', 1.0);
 
-        // Calculate image size in mm to preserve aspect ratio
+        // Draw image to PDF centered
         const imgProps = pdf.getImageProperties(imgData);
         const imgRatio = imgProps.width / imgProps.height;
         const pageRatio = pdfWidth / pdfHeight;
@@ -128,10 +154,8 @@ export default function PrintCoupons() {
         } else {
           drawWidth = pdfHeight * imgRatio;
         }
-
         const offsetX = (pdfWidth - drawWidth) / 2;
         const offsetY = (pdfHeight - drawHeight) / 2;
-
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, 'PNG', offsetX, offsetY, drawWidth, drawHeight);
       }
