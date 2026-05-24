@@ -6,6 +6,8 @@ import QRScanner from '../components/Scanner/QRScanner';
 import RegistrationForm from '../components/Scanner/RegistrationForm';
 import CouponDetail from '../components/Scanner/CouponDetail';
 
+const SUCCESS_POPUP_DURATION = 3;
+
 export default function ScannerPage() {
   const [scanResult, setScanResult] = useState(null);
   const [couponData, setCouponData] = useState(null);
@@ -96,7 +98,7 @@ export default function ScannerPage() {
       
       setCouponData(response.data.data);
       clearSuccessTimers();
-      const duration = 6;
+      const duration = SUCCESS_POPUP_DURATION;
       setStep('success');
       setSuccessPopup({ seconds: duration, title: 'DAGING BERHASIL DIKONFIRMASI' });
       setMessage({
@@ -230,7 +232,7 @@ export default function ScannerPage() {
               <div className="h-4 w-full overflow-hidden rounded-full bg-gray-100">
                 <div
                   className="h-full rounded-full bg-green-600 transition-all duration-1000 ease-linear"
-                  style={{ width: `${(successPopup.seconds / 6) * 100}%` }}
+                  style={{ width: `${(successPopup.seconds / SUCCESS_POPUP_DURATION) * 100}%` }}
                 />
               </div>
               <p className="mt-4 text-xs sm:text-sm text-gray-500">
