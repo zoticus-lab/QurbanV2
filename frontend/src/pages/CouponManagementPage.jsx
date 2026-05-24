@@ -255,7 +255,88 @@ export default function CouponManagementPage() {
             <p>📭 Tidak ada kupon yang ditemukan</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            <div className="md:hidden p-4 space-y-3">
+              {filteredCoupons.map((coupon) => (
+                <div key={coupon.id} className="border border-gray-200 rounded-xl p-4 shadow-sm bg-gray-50">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500">No Urut</p>
+                      <p className="font-mono text-lg font-bold text-gray-900">{coupon.no_urut}</p>
+                    </div>
+                    <span className={`inline-flex px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(coupon.status)}`}>
+                      {getStatusLabel(coupon.status)}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 space-y-2 text-sm text-gray-700">
+                    <div>
+                      <p className="text-xs text-gray-500">Nama Penerima</p>
+                      <p className="font-medium text-gray-900">{coupon.nama_penerima || '-'}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">RT/RW</p>
+                        <p>{coupon.rt ? `${coupon.rt}/${coupon.rw}` : '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Waktu Ambil</p>
+                        <p>{coupon.waktu_ambil ? new Date(coupon.waktu_ambil).toLocaleString('id-ID') : '-'}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500">Alamat</p>
+                      <p className="line-clamp-2">{coupon.alamat || '-'}</p>
+                    </div>
+                    {coupon.photo_penerima && (
+                      <button onClick={() => setSelectedPhoto(coupon.photo_penerima)} className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg text-xs font-bold transition-colors">
+                        <ImageIcon size={14} /> Lihat Foto
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => viewQRCode(coupon)}
+                      className="inline-flex items-center justify-center flex-1 min-w-[90px] px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm"
+                    >
+                      <Eye size={16} className="mr-1" /> QR
+                    </button>
+                    <button
+                      onClick={() => startEdit(coupon)}
+                      className="inline-flex items-center justify-center flex-1 min-w-[90px] px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                    >
+                      <Edit2 size={16} className="mr-1" /> Edit
+                    </button>
+                    {deleteConfirmId === coupon.id ? (
+                      <div className="flex flex-1 min-w-[180px] gap-2">
+                        <button
+                          onClick={() => deleteCoupon(coupon.id)}
+                          className="flex-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                        >
+                          Ya
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmId(null)}
+                          className="flex-1 px-3 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 text-sm"
+                        >
+                          Tidak
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setDeleteConfirmId(coupon.id)}
+                        className="inline-flex items-center justify-center flex-1 min-w-[90px] px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                      >
+                        <Trash2 size={16} className="mr-1" /> Hapus
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
@@ -414,7 +495,8 @@ export default function CouponManagementPage() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
+          </>
         )}
       </div>
 

@@ -364,6 +364,91 @@ export default function FinancePage() {
 
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             {loading ? <p className="p-8 text-center text-gray-500">Memuat data...</p> : (
+              <>
+              <div className="md:hidden p-4 space-y-3">
+                {transactions.map((t) => (
+                  <div key={t.id} className="border border-gray-200 rounded-xl p-4 bg-gray-50 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs text-gray-500">Tanggal</p>
+                        <p className="font-medium text-gray-900">{new Date(t.transaction_date).toLocaleDateString('id-ID')}</p>
+                      </div>
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${t.type === 'pemasukan' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {t.type === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran'}
+                      </span>
+                    </div>
+
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div>
+                        <p className="text-xs text-gray-500">Keterangan</p>
+                        <p className="font-semibold text-gray-900 break-words">{t.title}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Kategori</p>
+                        <p><span className="bg-gray-100 px-2 py-1 rounded text-xs">{t.category}</span></p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Nominal</p>
+                        <p className="font-bold">
+                          {t.type === 'pemasukan'
+                            ? <span className="text-green-600">+{formatRupiah(t.amount)}</span>
+                            : <span className="text-red-600">-{formatRupiah(t.amount)}</span>}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500">Bukti</p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {t.proof_image ? (
+                            <button 
+                              onClick={() => setSelectedImage(t.proof_image)}
+                              className="text-blue-600 flex items-center gap-1 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-md transition-colors font-medium"
+                            >
+                              <Eye size={16}/> Bukti
+                            </button>
+                          ) : <span className="text-gray-500">-</span>}
+                          {t.goods_image && (
+                            <button 
+                              onClick={() => setSelectedImage(t.goods_image)}
+                              className="text-purple-600 flex items-center gap-1 hover:text-purple-800 bg-purple-50 hover:bg-purple-100 px-3 py-2 rounded-md transition-colors font-medium"
+                            >
+                              <Eye size={16}/> Barang
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          openEditModal(t);
+                        }}
+                        className="flex-1 min-w-[110px] inline-flex items-center justify-center gap-1 bg-amber-50 text-amber-700 hover:bg-amber-100 px-3 py-2 rounded-md transition-colors font-medium"
+                      >
+                        <Edit2 size={16} /> Edit
+                      </button>
+                      <button
+                        type="button"
+                        disabled={deletingId === t.id}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteTransaction(t);
+                        }}
+                        className={`flex-1 min-w-[120px] inline-flex items-center justify-center gap-1 bg-red-50 text-red-700 hover:bg-red-100 px-3 py-2 rounded-md transition-colors font-medium ${deletingId === t.id ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      >
+                        <Trash2 size={16} /> {deletingId === t.id ? 'Menghapus...' : 'Hapus'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {transactions.length === 0 && <div className="p-8 text-center text-gray-500">Belum ada riwayat transaksi.</div>}
+              </div>
+
+              <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead className="bg-gray-50 text-gray-700 border-b">
                   <tr>
@@ -436,6 +521,8 @@ export default function FinancePage() {
                   {transactions.length === 0 && <tr><td colSpan="6" className="p-8 text-center text-gray-500">Belum ada riwayat transaksi.</td></tr>}
                 </tbody>
               </table>
+              </div>
+              </>
             )}
           </div>
         </div>

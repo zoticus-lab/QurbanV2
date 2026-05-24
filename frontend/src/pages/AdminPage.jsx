@@ -48,10 +48,10 @@ export default function AdminPage() {
       )}
 
       {/* Tab Navigation */}
-      <div className="flex gap-4 mb-8 border-b border-gray-200">
+      <div className="flex flex-wrap gap-3 mb-8 border-b border-gray-200 pb-2">
         <button
           onClick={() => setActiveTab('generate')}
-          className={`px-6 py-3 font-semibold border-b-2 transition-all ${
+          className={`px-4 sm:px-6 py-3 font-semibold border-b-2 transition-all whitespace-nowrap ${
             activeTab === 'generate'
               ? 'border-green-600 text-green-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
@@ -62,7 +62,7 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setActiveTab('print')}
-          className={`px-6 py-3 font-semibold border-b-2 transition-all ${
+          className={`px-4 sm:px-6 py-3 font-semibold border-b-2 transition-all whitespace-nowrap ${
             activeTab === 'print'
               ? 'border-green-600 text-green-600'
               : 'border-transparent text-gray-600 hover:text-gray-900'
