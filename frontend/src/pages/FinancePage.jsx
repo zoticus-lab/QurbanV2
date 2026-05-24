@@ -58,7 +58,7 @@ export default function FinancePage() {
     }
   };
 
-  const handleFileConvert = (e, fieldName, setTargetForm) => {
+  const handleFileConvert = (e, fieldName, setTargetForm = setFormData) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -656,8 +656,8 @@ export default function FinancePage() {
                   <label className="block text-xs font-medium text-gray-600 mb-2">
                     1. {activeTab === 'pemasukan' ? 'Upload Bukti Transfer / Foto Uang (Opsional)' : 'Upload Foto Bon / Nota / Amplop Gaji (Opsional)'}
                   </label>
-                  <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[120px] overflow-hidden group">
-                    <input type="file" accept="image/*" onChange={(e) => handleFileConvert(e, 'proof_image')} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[120px] overflow-hidden group">
+                      <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileConvert(e, 'proof_image', setFormData)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                     {formData.proof_image ? (
                       <img src={formData.proof_image} alt="Bukti" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
                     ) : (
@@ -830,7 +830,7 @@ export default function FinancePage() {
                     <div>
                       <label className="block text-xs font-medium text-gray-600 mb-2 mt-4">Upload Foto Barang Fisik / Kegiatan (Opsional)</label>
                       <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-100 transition flex flex-col items-center justify-center min-h-[120px] overflow-hidden group">
-                        <input type="file" accept="image/*" onChange={(e) => handleFileConvert(e, 'goods_image', setEditFormData)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <input type="file" accept="image/*" capture="environment" onChange={(e) => handleFileConvert(e, 'goods_image', setEditFormData)} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                         {editFormData.goods_image ? (
                           <img src={editFormData.goods_image} alt="Barang" className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-40 transition-opacity" />
                         ) : (
