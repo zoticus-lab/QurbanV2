@@ -317,40 +317,44 @@ export default function FinancePage() {
         <head>
           <title>Laporan Keuangan Kurban</title>
           <style>
-            @page { size: A4 portrait; margin: 14mm; }
+            @page { size: A4 portrait; margin: 8mm; }
             * { box-sizing: border-box; }
-            body { font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.35; margin: 0; padding: 0; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.2; margin: 0; padding: 0; }
             .page { width: 100%; }
-            .header { border: 2px solid #111; padding: 14px 16px; margin-bottom: 12px; }
-            .header-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-            .title-block h1 { margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
-            .title-block p { margin: 4px 0 0; font-size: 12px; color: #444; }
-            .meta { text-align: right; font-size: 12px; color: #333; line-height: 1.4; }
-            .meta strong { display: block; font-size: 13px; color: #111; margin-bottom: 2px; }
-            .note { margin-top: 8px; font-size: 11px; color: #555; background: #f6f6f6; border: 1px solid #d9d9d9; padding: 8px 10px; }
-            .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
-            .summary-card { border: 1.5px solid #111; padding: 10px 12px; }
-            .summary-card span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #555; }
-            .summary-card strong { display: block; margin-top: 4px; font-size: 15px; }
-            .section { margin-bottom: 16px; page-break-inside: avoid; }
-            .section h2 { margin: 0 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.3px; }
-            table { width: 100%; border-collapse: collapse; }
-            th, td { border: 1px solid #111; padding: 8px 7px; font-size: 11px; vertical-align: top; }
-            th { background: #f1f1f1; text-align: center; text-transform: uppercase; font-size: 10px; }
+            .header { border: 2px solid #111; padding: 10px 12px; margin-bottom: 8px; page-break-inside: avoid; }
+            .header-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
+            .title-block h1 { margin: 0; font-size: 17px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2px; }
+            .title-block p { margin: 3px 0 0; font-size: 10px; color: #444; }
+            .meta { text-align: right; font-size: 10px; color: #333; line-height: 1.3; }
+            .meta strong { display: block; font-size: 11px; color: #111; margin-bottom: 1px; }
+            .note { margin-top: 6px; font-size: 10px; color: #555; background: #f6f6f6; border: 1px solid #d9d9d9; padding: 6px 8px; }
+            .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 8px; }
+            .summary-card { border: 1.5px solid #111; padding: 8px 10px; }
+            .summary-card span { display: block; font-size: 9px; text-transform: uppercase; letter-spacing: 0.4px; color: #555; }
+            .summary-card strong { display: block; margin-top: 3px; font-size: 13px; }
+            .section { margin-bottom: 10px; page-break-inside: avoid; }
+            .section h2 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.2px; }
+            table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+            th, td { border: 1px solid #111; padding: 5px 6px; font-size: 9px; vertical-align: top; word-wrap: break-word; overflow-wrap: anywhere; }
+            th { background: #f1f1f1; text-align: center; text-transform: uppercase; font-size: 9px; }
             .center { text-align: center; }
             .right { text-align: right; white-space: nowrap; }
             .muted { color: #666; }
-            .row-title { font-weight: 700; margin-bottom: 2px; }
-            .row-subtitle { font-size: 10px; color: #555; }
-            .attachment-table img { width: 110px; height: 110px; object-fit: contain; border: 1px solid #111; background: #fff; padding: 2px; display: block; }
-            .attachment-images { display: flex; flex-wrap: wrap; gap: 8px; }
-            .attachment-item { width: 110px; }
-            .attachment-item .label { margin-top: 4px; font-size: 10px; text-align: center; }
+            .row-title { font-weight: 700; margin-bottom: 1px; font-size: 10px; }
+            .row-subtitle { font-size: 9px; color: #555; }
+            .attachment-table img { width: 82px; height: 82px; object-fit: contain; border: 1px solid #111; background: #fff; padding: 1px; display: block; }
+            .attachment-images { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-start; }
+            .attachment-item { width: 82px; }
+            .attachment-item .label { margin-top: 3px; font-size: 8px; text-align: center; }
+            .attachment-table td:nth-child(3) { text-align: center; }
+            .attachment-table .attachment-images { justify-content: center; }
             .empty-row { text-align: center; color: #666; font-style: italic; }
+            .voucher-frame { border: 1px solid #111; padding: 8px; }
           </style>
         </head>
         <body>
           <div class="page">
+            <div class="voucher-frame">
             <div class="header">
               <div class="header-top">
                 <div class="title-block">
@@ -387,12 +391,12 @@ export default function FinancePage() {
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 6%;">No</th>
-                    <th style="width: 28%;">Deskripsi / Nama Pemasukan</th>
-                    <th style="width: 12%;">Satuan</th>
-                    <th style="width: 18%;">Harga Satuan</th>
-                    <th style="width: 18%;">Total</th>
-                    <th style="width: 18%;">Keterangan</th>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 30%;">Deskripsi / Nama Pemasukan</th>
+                    <th style="width: 11%;">Satuan</th>
+                    <th style="width: 17%;">Harga Satuan</th>
+                    <th style="width: 17%;">Total</th>
+                    <th style="width: 20%;">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -406,12 +410,12 @@ export default function FinancePage() {
               <table>
                 <thead>
                   <tr>
-                    <th style="width: 6%;">No</th>
-                    <th style="width: 28%;">Deskripsi / Nama Pengeluaran</th>
-                    <th style="width: 12%;">Satuan</th>
-                    <th style="width: 18%;">Harga Satuan</th>
-                    <th style="width: 18%;">Total</th>
-                    <th style="width: 18%;">Keterangan</th>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 30%;">Deskripsi / Nama Pengeluaran</th>
+                    <th style="width: 11%;">Satuan</th>
+                    <th style="width: 17%;">Harga Satuan</th>
+                    <th style="width: 17%;">Total</th>
+                    <th style="width: 20%;">Keterangan</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -425,9 +429,9 @@ export default function FinancePage() {
               <table class="attachment-table">
                 <thead>
                   <tr>
-                    <th style="width: 6%;">No</th>
-                    <th style="width: 34%;">Deskripsi</th>
-                    <th style="width: 60%;">Lampiran Foto</th>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 28%;">Deskripsi</th>
+                    <th style="width: 67%;">Lampiran Foto</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -441,9 +445,9 @@ export default function FinancePage() {
               <table class="attachment-table">
                 <thead>
                   <tr>
-                    <th style="width: 6%;">No</th>
-                    <th style="width: 34%;">Deskripsi</th>
-                    <th style="width: 60%;">Lampiran Foto</th>
+                    <th style="width: 5%;">No</th>
+                    <th style="width: 28%;">Deskripsi</th>
+                    <th style="width: 67%;">Lampiran Foto</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -451,9 +455,10 @@ export default function FinancePage() {
                 </tbody>
               </table>
             </section>
+            </div>
           </div>
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 900); };
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 700); };
           </script>
         </body>
       </html>
