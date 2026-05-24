@@ -12,7 +12,29 @@ export default function ScannerPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [step, setStep] = useState('scan'); // scan, register, detail
-  const [successHoldSeconds, setSuccessHoldSeconds] = useState(0);
+  const [successPopup, setSuccessPopup] = useState({ visible: false, seconds: 0, title: '' });
+  const successTimerRef = useRef(null);
+  const successIntervalRef = useRef(null);
+
+  const clearSuccessTimers = () => {
+    if (successTimerRef.current) {
+      clearTimeout(successTimerRef.current);
+      successTimerRef.current = null;
+    }
+    if (successIntervalRef.current) {
+      clearInterval(successIntervalRef.current);
+      successIntervalRef.current = null;
+    }
+  };
+
+  const returnToScanner = () => {
+    clearSuccessTimers();
+    setScanResult(null);
+    setCouponData(null);
+    setStep('scan');
+    setMessage(null);
+    setSuccessPopup({ visible: false, seconds: 0, title: '' });
+  };
 
   const handleScanSuccess = async (decodedText) => {
     setLoading(true);
@@ -55,12 +77,7 @@ export default function ScannerPage() {
         text: 'Kupon berhasil didaftarkan'
       });
       
-      setTimeout(() => {
-        setScanResult(null);
-        setCouponData(null);
-        setStep('scan');
-        setMessage(null);
-      }, 2000);
+      successTimerRef.current = setTimeout(returnToScanner, 2000);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -77,33 +94,32 @@ export default function ScannerPage() {
       const response = await couponService.confirmPickup(scanResult);
       
       setCouponData(response.data.data);
-      setSuccessHoldSeconds(4);
+      clearSuccessTimers();
+      const duration = 6;
+      setSuccessPopup({
+        visible: true,
+        seconds: duration,
+        title: 'DAGING BERHASIL DIKONFIRMASI'
+      });
       setMessage({
         type: 'success',
-        text: 'Pengambilan daging berhasil dikonfirmasi. Kembali ke scanner dalam 4 detik.'
+        text: 'Pengambilan daging berhasil dikonfirmasi.'
       });
-      
-      const holdTimer = setInterval(() => {
-        setSuccessHoldSeconds((prev) => {
-          if (prev <= 1) {
-            clearInterval(holdTimer);
-            setScanResult(null);
-            setCouponData(null);
-            setStep('scan');
-            setMessage(null);
-            return 0;
+
+      successIntervalRef.current = setInterval(() => {
+        setSuccessPopup((prev) => {
+          if (!prev.visible) return prev;
+          const nextSeconds = prev.seconds - 1;
+          if (nextSeconds <= 0) {
+            clearSuccessTimers();
+            returnToScanner();
+            return { visible: false, seconds: 0, title: '' };
           }
-          return prev - 1;
+          return { ...prev, seconds: nextSeconds };
         });
       }, 1000);
 
-      setTimeout(() => {
-        setScanResult(null);
-        setCouponData(null);
-        setStep('scan');
-        setMessage(null);
-        setSuccessHoldSeconds(0);
-      }, 4000);
+      successTimerRef.current = setTimeout(returnToScanner, duration * 1000);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -115,11 +131,12 @@ export default function ScannerPage() {
   };
 
   const handleReset = () => {
-    setScanResult(null);
-    setCouponData(null);
-    setStep('scan');
-    setMessage(null);
+    returnToScanner();
   };
+
+  useEffect(() => {
+    return () => clearSuccessTimers();
+  }, []);
 
   return (
     <div className="p-4 md:p-8">
@@ -190,9 +207,27 @@ export default function ScannerPage() {
           coupon={couponData}
           onConfirmPickup={handleConfirmPickup}
           onScanAgain={handleReset}
-          successHoldSeconds={successHoldSeconds}
-          pickupFlowActive={successHoldSeconds > 0}
         />
+      )}
+
+      {successPopup.visible && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl border border-gray-200">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700">
+              <CheckCircle size={34} />
+            </div>
+            <h2 className="text-2xl font-black text-green-700 mb-2">{successPopup.title}</h2>
+            <p className="text-gray-700 mb-4">
+              Data sudah tersimpan. Layar akan kembali ke scanner dalam <span className="font-bold text-gray-900">{successPopup.seconds}</span> detik.
+            </p>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-green-600 transition-all duration-1000 ease-linear"
+                style={{ width: `${(successPopup.seconds / 6) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

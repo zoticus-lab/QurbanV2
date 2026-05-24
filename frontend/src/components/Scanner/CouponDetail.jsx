@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
-export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain, successHoldSeconds = 0, pickupFlowActive = false }) {
+export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain }) {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('id-ID', {
@@ -39,20 +39,6 @@ export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain, suc
           <div>
             <h3 className="font-semibold text-green-900 mb-1">Kupon Sudah Terdaftar</h3>
             <p className="text-green-800 text-sm">Silakan konfirmasi pengambilan daging atau scan kupon lain.</p>
-          </div>
-        </div>
-      )}
-
-      {pickupFlowActive && (
-        <div className="bg-green-600 text-white rounded-lg p-5 mb-6 shadow-lg border border-green-700">
-          <div className="flex items-start gap-3">
-            <CheckCircle size={28} className="flex-shrink-0 mt-0.5" />
-            <div>
-              <h3 className="text-xl font-bold mb-1">Berhasil dikonfirmasi</h3>
-              <p className="text-sm text-green-50">
-                Data sudah disimpan. Kembali ke scanner dalam {successHoldSeconds} detik agar panitia sempat membaca.
-              </p>
-            </div>
           </div>
         </div>
       )}
@@ -112,16 +98,7 @@ export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain, suc
           </div>
         </div>
 
-        {pickupFlowActive ? (
-          <div className="pt-6 border-t border-gray-200 mt-6">
-            <button
-              disabled
-              className="w-full bg-green-200 text-green-800 font-semibold py-4 px-6 rounded-lg transition-all text-lg shadow-md cursor-not-allowed opacity-90"
-            >
-              Menunggu kembali ke scanner...
-            </button>
-          </div>
-        ) : isDiambil ? (
+        {isDiambil ? (
           <div className="pt-6 border-t border-gray-200 mt-6">
             <button
               onClick={onScanAgain}
