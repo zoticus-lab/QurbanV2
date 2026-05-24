@@ -212,21 +212,28 @@ export default function ScannerPage() {
       )}
 
       {successPopup.visible && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-2xl border border-gray-200">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700">
-              <CheckCircle size={34} />
+        <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-black/75 p-4 sm:p-6 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-t-3xl sm:rounded-2xl bg-white p-6 sm:p-7 text-center shadow-2xl border border-gray-200 max-h-[85vh] overflow-y-auto">
+            <div className="mx-auto mb-5 flex h-18 w-18 items-center justify-center rounded-full bg-green-100 text-green-700">
+              <CheckCircle size={42} />
             </div>
-            <h2 className="text-2xl font-black text-green-700 mb-2">{successPopup.title}</h2>
-            <p className="text-gray-700 mb-4">
-              Konfirmasi berhasil disimpan. Layar akan kembali ke scanner dalam <span className="font-bold text-gray-900">{successPopup.seconds}</span> detik.
+            <h2 className="text-3xl sm:text-2xl font-black text-green-700 mb-3 leading-tight">
+              {successPopup.title}
+            </h2>
+            <p className="text-gray-700 mb-5 text-base sm:text-sm leading-relaxed">
+              Konfirmasi berhasil disimpan. Layar akan kembali ke scanner dalam{' '}
+              <span className="font-bold text-gray-900 text-lg">{successPopup.seconds}</span>{' '}
+              detik.
             </p>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
+            <div className="h-4 w-full overflow-hidden rounded-full bg-gray-100">
               <div
                 className="h-full rounded-full bg-green-600 transition-all duration-1000 ease-linear"
                 style={{ width: `${(successPopup.seconds / 6) * 100}%` }}
               />
             </div>
+            <p className="mt-4 text-xs sm:text-[11px] text-gray-500">
+              Mohon tunggu sebentar sampai otomatis kembali ke scanner.
+            </p>
           </div>
         </div>
       )}
