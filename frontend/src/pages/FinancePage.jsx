@@ -211,34 +211,105 @@ export default function FinancePage() {
       return;
     }
 
-    let rowsHtml = '';
-    transactions.forEach((t, index) => {
-      const date = new Date(t.transaction_date).toLocaleDateString('id-ID');
-      const type = t.type === 'pemasukan' ? 'Pemasukan' : 'Pengeluaran';
-      const amountStr = formatRupiah(t.amount);
-      
-      let imagesHtml = '';
-      if (t.proof_image) {
-        imagesHtml += `<div style="margin-bottom: 8px;"><strong>Bukti:</strong><br/><img src="${t.proof_image}" alt="Bukti"/></div>`;
-      }
-      if (t.goods_image) {
-        imagesHtml += `<div><strong>Barang:</strong><br/><img src="${t.goods_image}" alt="Barang"/></div>`;
+    const stripQtySuffix = (title) => String(title || '').replace(/\s*\(x\s*\d+\)\s*$/i, '').trim();
+    const extractQtyFromTitle = (title) => {
+      const match = String(title || '').match(/\(x\s*(\d+)\)\s*$/i);
+      const qty = match ? Number(match[1]) : 1;
+      return Number.isFinite(qty) && qty > 0 ? qty : 1;
+    };
+    const guessUnitLabel = (title, type) => {
+      if (type === 'pemasukan') return 'trx';
+
+      const lowerTitle = String(title || '').toLowerCase();
+      const unitMatchers = [
+        [/\bbox\b/, 'box'],
+        [/\bsachet\b/, 'sachet'],
+        [/\bpcs\b/, 'pcs'],
+        [/\bpack\b|\bpck\b/, 'pack'],
+        [/\bdus\b/, 'dus'],
+        [/\bkarung\b/, 'karung'],
+        [/\bbotol\b/, 'botol'],
+        [/\bkantong\b/, 'kantong'],
+        [/\bbungkus\b/, 'bungkus'],
+        [/\blusin\b/, 'lusin'],
+        [/\bkg\b|\bkilo\b/, 'kg'],
+        [/\bltr\b|\bliter\b/, 'liter'],
+        [/\bset\b/, 'set']
+      ];
+
+      for (const [pattern, label] of unitMatchers) {
+        if (pattern.test(lowerTitle)) return label;
       }
 
-      rowsHtml += `
-        <tr>
-          <td class="text-center">${index + 1}</td>
-          <td>${date}</td>
-          <td><strong>${t.title}</strong><br/>Kategori: ${t.category}<br/>Jenis: ${type}</td>
-          <td class="amount">${amountStr}</td>
-          <td class="text-center">
-            <div class="img-container">
-              ${imagesHtml || '-'}
+      return 'pcs';
+    };
+    const buildAttachmentCell = (transaction) => {
+      const attachments = [];
+      if (transaction.proof_image) attachments.push({ label: 'Bukti', src: transaction.proof_image });
+      if (transaction.goods_image) attachments.push({ label: 'Barang', src: transaction.goods_image });
+
+      if (!attachments.length) {
+        return '<span class="muted">-</span>';
+      }
+
+      return `
+        <div class="attachment-images">
+          ${attachments.map((item) => `
+            <div class="attachment-item">
+              <img src="${item.src}" alt="${item.label}" />
+              <div class="label">${item.label}</div>
             </div>
-          </td>
-        </tr>
+          `).join('')}
+        </div>
       `;
-    });
+    };
+
+    const buildRows = (type) => transactions
+      .filter((transaction) => transaction.type === type)
+      .map((transaction, index) => {
+        const amount = Number(transaction.amount) || 0;
+        const description = stripQtySuffix(transaction.title) || transaction.title || '-';
+        const note = transaction.notes || transaction.keterangan || transaction.category || '-';
+        const qty = type === 'pengeluaran' ? extractQtyFromTitle(transaction.title) : 1;
+        const unitLabel = guessUnitLabel(transaction.title, type);
+        const unitPrice = qty > 0 ? amount / qty : amount;
+
+        return `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>
+              <div class="row-title">${description}</div>
+              <div class="row-subtitle">${transaction.category || '-'}</div>
+            </td>
+            <td class="center">${qty} ${unitLabel}</td>
+            <td class="right">${formatRupiah(unitPrice)}</td>
+            <td class="right">${formatRupiah(amount)}</td>
+            <td>${note}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const buildAttachmentRows = (type) => transactions
+      .filter((transaction) => transaction.type === type)
+      .filter((transaction) => transaction.proof_image || transaction.goods_image)
+      .map((transaction, index) => {
+        const description = stripQtySuffix(transaction.title) || transaction.title || '-';
+
+        return `
+          <tr>
+            <td class="center">${index + 1}</td>
+            <td>${description}</td>
+            <td>${buildAttachmentCell(transaction)}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const incomeRowsHtml = buildRows('pemasukan');
+    const expenseRowsHtml = buildRows('pengeluaran');
+    const incomeAttachmentRowsHtml = buildAttachmentRows('pemasukan');
+    const expenseAttachmentRowsHtml = buildAttachmentRows('pengeluaran');
 
     const html = `
       <!DOCTYPE html>
@@ -246,68 +317,143 @@ export default function FinancePage() {
         <head>
           <title>Laporan Keuangan Kurban</title>
           <style>
-            @page { size: A4 portrait; margin: 20mm; }
-            body { font-family: 'Times New Roman', Times, serif; color: #000; line-height: 1.4; margin: 0; padding: 0; }
-            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
-            .header h1 { margin: 0; font-size: 22px; text-transform: uppercase; }
-            .header p { margin: 5px 0 0 0; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; page-break-inside: auto; }
-            tr { page-break-inside: avoid; page-break-after: auto; }
-            th, td { border: 1px solid #000; padding: 10px; vertical-align: top; font-size: 13px; }
-            th { background-color: #fff; font-weight: bold; text-align: center; text-transform: uppercase; }
-            .amount { text-align: right; white-space: nowrap; }
-            .text-center { text-align: center; }
-            .img-container img { max-width: 140px; max-height: 140px; object-fit: contain; border: 1px solid #000; padding: 2px; }
-            .summary-box { width: 350px; margin-left: auto; border: 2px solid #000; page-break-inside: avoid; }
-            .summary-row { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #000; font-size: 14px; }
-            .summary-row:last-child { border-bottom: none; font-weight: bold; border-top: 2px solid #000; }
-            .footer { margin-top: 50px; text-align: right; page-break-inside: avoid; }
-            .signature-area { display: inline-block; text-align: center; width: 200px; }
-            .signature-name { margin-top: 80px; font-weight: bold; text-decoration: underline; }
+            @page { size: A4 portrait; margin: 14mm; }
+            * { box-sizing: border-box; }
+            body { font-family: Arial, Helvetica, sans-serif; color: #111; line-height: 1.35; margin: 0; padding: 0; }
+            .page { width: 100%; }
+            .header { border: 2px solid #111; padding: 14px 16px; margin-bottom: 12px; }
+            .header-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+            .title-block h1 { margin: 0; font-size: 20px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+            .title-block p { margin: 4px 0 0; font-size: 12px; color: #444; }
+            .meta { text-align: right; font-size: 12px; color: #333; line-height: 1.4; }
+            .meta strong { display: block; font-size: 13px; color: #111; margin-bottom: 2px; }
+            .note { margin-top: 8px; font-size: 11px; color: #555; background: #f6f6f6; border: 1px solid #d9d9d9; padding: 8px 10px; }
+            .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 12px; }
+            .summary-card { border: 1.5px solid #111; padding: 10px 12px; }
+            .summary-card span { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.4px; color: #555; }
+            .summary-card strong { display: block; margin-top: 4px; font-size: 15px; }
+            .section { margin-bottom: 16px; page-break-inside: avoid; }
+            .section h2 { margin: 0 0 8px; font-size: 15px; text-transform: uppercase; letter-spacing: 0.3px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #111; padding: 8px 7px; font-size: 11px; vertical-align: top; }
+            th { background: #f1f1f1; text-align: center; text-transform: uppercase; font-size: 10px; }
+            .center { text-align: center; }
+            .right { text-align: right; white-space: nowrap; }
+            .muted { color: #666; }
+            .row-title { font-weight: 700; margin-bottom: 2px; }
+            .row-subtitle { font-size: 10px; color: #555; }
+            .attachment-table img { width: 110px; height: 110px; object-fit: contain; border: 1px solid #111; background: #fff; padding: 2px; display: block; }
+            .attachment-images { display: flex; flex-wrap: wrap; gap: 8px; }
+            .attachment-item { width: 110px; }
+            .attachment-item .label { margin-top: 4px; font-size: 10px; text-align: center; }
+            .empty-row { text-align: center; color: #666; font-style: italic; }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1>Laporan Keuangan Kepanitiaan Kurban</h1>
-            <p>Dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
-          </div>
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 5%;">No</th>
-                <th style="width: 15%;">Tanggal</th>
-                <th style="width: 35%;">Keterangan Transaksi</th>
-                <th style="width: 20%;">Nominal</th>
-                <th style="width: 25%;">Lampiran</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml.length > 0 ? rowsHtml : '<tr><td colspan="5" class="text-center">Belum ada transaksi</td></tr>'}
-            </tbody>
-          </table>
-          <div class="summary-box">
-            <div class="summary-row">
-              <span>Total Pemasukan:</span>
-              <span>${formatRupiah(totalPemasukan)}</span>
+          <div class="page">
+            <div class="header">
+              <div class="header-top">
+                <div class="title-block">
+                  <h1>Laporan Keuangan Kepanitiaan Kurban</h1>
+                  <p>Dicetak pada ${new Date().toLocaleString('id-ID')}</p>
+                </div>
+                <div class="meta">
+                  <strong>Bendahara Panitia</strong>
+                  <span>Rekap pemasukan, pengeluaran, dan lampiran foto</span>
+                </div>
+              </div>
+              <div class="note">
+                Satuan menampilkan jumlah barang atau transaksi. Jika tidak ada satuan khusus, sistem akan memakai pcs sebagai default.
+              </div>
             </div>
-            <div class="summary-row">
-              <span>Total Pengeluaran:</span>
-              <span>${formatRupiah(totalPengeluaran)}</span>
+
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span>Total Pemasukan</span>
+                <strong>${formatRupiah(totalPemasukan)}</strong>
+              </div>
+              <div class="summary-card">
+                <span>Total Pengeluaran</span>
+                <strong>${formatRupiah(totalPengeluaran)}</strong>
+              </div>
+              <div class="summary-card">
+                <span>Sisa Saldo Akhir</span>
+                <strong>${formatRupiah(saldo)}</strong>
+              </div>
             </div>
-            <div class="summary-row">
-              <span>Sisa Saldo Akhir:</span>
-              <span>${formatRupiah(saldo)}</span>
-            </div>
-          </div>
-          <div class="footer">
-            <div class="signature-area">
-              <p>Mengetahui,</p>
-              <p style="margin-bottom: 80px;">Bendahara Panitia</p>
-              <p class="signature-name">( ........................................ )</p>
-            </div>
+
+            <section class="section">
+              <h2>Tabel Pemasukan</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 6%;">No</th>
+                    <th style="width: 28%;">Deskripsi / Nama Pemasukan</th>
+                    <th style="width: 12%;">Satuan</th>
+                    <th style="width: 18%;">Harga Satuan</th>
+                    <th style="width: 18%;">Total</th>
+                    <th style="width: 18%;">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${incomeRowsHtml || '<tr><td colspan="6" class="empty-row">Belum ada data pemasukan</td></tr>'}
+                </tbody>
+              </table>
+            </section>
+
+            <section class="section">
+              <h2>Tabel Pengeluaran</h2>
+              <table>
+                <thead>
+                  <tr>
+                    <th style="width: 6%;">No</th>
+                    <th style="width: 28%;">Deskripsi / Nama Pengeluaran</th>
+                    <th style="width: 12%;">Satuan</th>
+                    <th style="width: 18%;">Harga Satuan</th>
+                    <th style="width: 18%;">Total</th>
+                    <th style="width: 18%;">Keterangan</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${expenseRowsHtml || '<tr><td colspan="6" class="empty-row">Belum ada data pengeluaran</td></tr>'}
+                </tbody>
+              </table>
+            </section>
+
+            <section class="section">
+              <h2>Lampiran Foto Pemasukan</h2>
+              <table class="attachment-table">
+                <thead>
+                  <tr>
+                    <th style="width: 6%;">No</th>
+                    <th style="width: 34%;">Deskripsi</th>
+                    <th style="width: 60%;">Lampiran Foto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${incomeAttachmentRowsHtml || '<tr><td colspan="3" class="empty-row">Belum ada lampiran foto pemasukan</td></tr>'}
+                </tbody>
+              </table>
+            </section>
+
+            <section class="section">
+              <h2>Lampiran Foto Pengeluaran</h2>
+              <table class="attachment-table">
+                <thead>
+                  <tr>
+                    <th style="width: 6%;">No</th>
+                    <th style="width: 34%;">Deskripsi</th>
+                    <th style="width: 60%;">Lampiran Foto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${expenseAttachmentRowsHtml || '<tr><td colspan="3" class="empty-row">Belum ada lampiran foto pengeluaran</td></tr>'}
+                </tbody>
+              </table>
+            </section>
           </div>
           <script>
-            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 800); };
+            window.onload = () => { setTimeout(() => { window.print(); window.close(); }, 900); };
           </script>
         </body>
       </html>
