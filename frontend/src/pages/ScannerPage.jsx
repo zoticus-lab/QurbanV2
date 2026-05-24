@@ -68,7 +68,8 @@ export default function ScannerPage() {
         formData.nama_penerima,
         formData.rt,
         formData.rw,
-        formData.alamat
+        formData.alamat,
+        formData.photo_penerima
       );
       
       setCouponData(response.data.data);
