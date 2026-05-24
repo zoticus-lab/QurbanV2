@@ -12,6 +12,7 @@ export default function ScannerPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [step, setStep] = useState('scan'); // scan, register, detail
+  const [successHoldSeconds, setSuccessHoldSeconds] = useState(0);
 
   const handleScanSuccess = async (decodedText) => {
     setLoading(true);
@@ -76,17 +77,33 @@ export default function ScannerPage() {
       const response = await couponService.confirmPickup(scanResult);
       
       setCouponData(response.data.data);
+      setSuccessHoldSeconds(4);
       setMessage({
         type: 'success',
-        text: 'Pengambilan daging berhasil dikonfirmasi'
+        text: 'Pengambilan daging berhasil dikonfirmasi. Kembali ke scanner dalam 4 detik.'
       });
       
+      const holdTimer = setInterval(() => {
+        setSuccessHoldSeconds((prev) => {
+          if (prev <= 1) {
+            clearInterval(holdTimer);
+            setScanResult(null);
+            setCouponData(null);
+            setStep('scan');
+            setMessage(null);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
       setTimeout(() => {
         setScanResult(null);
         setCouponData(null);
         setStep('scan');
         setMessage(null);
-      }, 2000);
+        setSuccessHoldSeconds(0);
+      }, 4000);
     } catch (error) {
       setMessage({
         type: 'error',
@@ -173,6 +190,8 @@ export default function ScannerPage() {
           coupon={couponData}
           onConfirmPickup={handleConfirmPickup}
           onScanAgain={handleReset}
+          successHoldSeconds={successHoldSeconds}
+          pickupFlowActive={successHoldSeconds > 0}
         />
       )}
     </div>
