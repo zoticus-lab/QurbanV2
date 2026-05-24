@@ -342,11 +342,11 @@ export default function RegistrationFormPage() {
               )}
 
               {/* Buttons */}
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
+                  className="flex-1 min-w-0 flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all"
                 >
                   <Save size={20} />
                   {saving ? 'Menyimpan...' : 'Simpan & Lanjut'}
@@ -355,7 +355,7 @@ export default function RegistrationFormPage() {
                 <button
                   onClick={handleSkip}
                   disabled={saving}
-                  className="flex items-center justify-center gap-2 px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-medium transition-all"
+                  className="flex items-center justify-center gap-2 px-5 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 disabled:opacity-50 font-medium transition-all sm:shrink-0"
                 >
                   <SkipForward size={20} />
                   Lewati
@@ -363,8 +363,9 @@ export default function RegistrationFormPage() {
 
                 <button
                   onClick={handleClear}
-                  className="px-6 py-3 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium transition-all"
+                  className="inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2.5 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium transition-all text-sm sm:text-base sm:shrink-0"
                 >
+                  <X size={16} />
                   Bersihkan
                 </button>
               </div>
