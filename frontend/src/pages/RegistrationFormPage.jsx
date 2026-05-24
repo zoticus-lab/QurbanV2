@@ -316,7 +316,7 @@ export default function RegistrationFormPage() {
               Foto Penerima (Opsional)
             </label>
             <div className="relative border-2 border-dashed border-gray-300 rounded-lg p-4 hover:bg-gray-50 transition flex flex-col items-center justify-center min-h-[160px] overflow-hidden group">
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+              <input type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
               {formData.photo_penerima ? (
                 <>
                   <img src={formData.photo_penerima} alt="Preview" className="absolute inset-0 w-full h-full object-cover opacity-80" />
