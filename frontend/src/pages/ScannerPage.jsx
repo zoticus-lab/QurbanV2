@@ -207,6 +207,7 @@ export default function ScannerPage() {
           coupon={couponData}
           onConfirmPickup={handleConfirmPickup}
           onScanAgain={handleReset}
+          pickupFlowActive={successPopup.visible}
         />
       )}
 
@@ -218,7 +219,7 @@ export default function ScannerPage() {
             </div>
             <h2 className="text-2xl font-black text-green-700 mb-2">{successPopup.title}</h2>
             <p className="text-gray-700 mb-4">
-              Data sudah tersimpan. Layar akan kembali ke scanner dalam <span className="font-bold text-gray-900">{successPopup.seconds}</span> detik.
+              Konfirmasi berhasil disimpan. Layar akan kembali ke scanner dalam <span className="font-bold text-gray-900">{successPopup.seconds}</span> detik.
             </p>
             <div className="h-3 w-full overflow-hidden rounded-full bg-gray-100">
               <div

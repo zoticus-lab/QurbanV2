@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 
-export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain }) {
+export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain, pickupFlowActive = false }) {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleString('id-ID', {
@@ -15,10 +15,26 @@ export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain }) {
   };
 
   const isDiambil = coupon.status === 'diambil';
+  const showSuccessState = pickupFlowActive && isDiambil;
 
   return (
     <div className="max-w-2xl mx-auto">
-      {isDiambil ? (
+      {showSuccessState ? (
+        <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6 mb-6">
+          <div className="flex items-start gap-4">
+            <CheckCircle className="text-green-600 mt-1 flex-shrink-0" size={32} />
+            <div className="flex-1">
+              <h3 className="text-2xl font-bold text-green-900 mb-2">✅ Konfirmasi berhasil</h3>
+              <p className="text-green-800 text-lg">
+                Status kupon sudah berubah menjadi <strong>Diambil</strong>.
+              </p>
+              <p className="text-green-700 text-sm mt-2">
+                Tunggu sebentar, lalu scanner akan kembali otomatis.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : isDiambil ? (
         <div className="bg-red-50 border-2 border-red-500 rounded-lg p-6 mb-6">
           <div className="flex items-start gap-4">
             <AlertCircle className="text-red-600 mt-1 flex-shrink-0" size={32} />
@@ -98,7 +114,16 @@ export default function CouponDetail({ coupon, onConfirmPickup, onScanAgain }) {
           </div>
         </div>
 
-        {isDiambil ? (
+        {showSuccessState ? (
+          <div className="pt-6 border-t border-gray-200 mt-6">
+            <button
+              disabled
+              className="w-full bg-green-200 text-green-800 font-semibold py-4 px-6 rounded-lg transition-all text-lg shadow-md cursor-not-allowed opacity-90"
+            >
+              Menyimpan konfirmasi...
+            </button>
+          </div>
+        ) : isDiambil ? (
           <div className="pt-6 border-t border-gray-200 mt-6">
             <button
               onClick={onScanAgain}
