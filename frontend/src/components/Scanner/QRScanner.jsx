@@ -4,11 +4,35 @@ import { Html5Qrcode } from 'html5-qrcode';
 export default function QRScanner({ onScanSuccess }) {
   const qrReaderRef = useRef(null);
   const html5QrcodeRef = useRef(null);
+  const onScanSuccessRef = useRef(onScanSuccess);
   const [isScanning, setIsScanning] = useState(false);
   const [cameras, setCameras] = useState([]);
   const [selectedCamera, setSelectedCamera] = useState('');
   const [loadingCameras, setLoadingCameras] = useState(true);
   const [permissionError, setPermissionError] = useState(false);
+
+  useEffect(() => {
+    onScanSuccessRef.current = onScanSuccess;
+  }, [onScanSuccess]);
+
+  const stopCurrentScanner = async () => {
+    if (!html5QrcodeRef.current) return;
+
+    try {
+      await html5QrcodeRef.current.stop();
+    } catch (err) {
+      // Ignore stop errors when scanner is already stopped or still initializing.
+    }
+
+    try {
+      await html5QrcodeRef.current.clear();
+    } catch (err) {
+      // Ignore clear errors on cleanup.
+    }
+
+    html5QrcodeRef.current = null;
+    setIsScanning(false);
+  };
 
   // Get list of available cameras
   useEffect(() => {
@@ -38,10 +62,10 @@ export default function QRScanner({ onScanSuccess }) {
 
     const initScanner = async () => {
       try {
-        // Stop existing scanner if any
-        if (html5QrcodeRef.current && html5QrcodeRef.current.isScanning) {
-          await html5QrcodeRef.current.stop();
-        }
+        await stopCurrentScanner();
+
+        // Give the browser a short breather so the next camera can open cleanly.
+        await new Promise((resolve) => setTimeout(resolve, 150));
 
         const html5QrCode = new Html5Qrcode('qr-reader');
         html5QrcodeRef.current = html5QrCode;
@@ -59,12 +83,10 @@ export default function QRScanner({ onScanSuccess }) {
           (decodedText) => {
             console.log('QR Code scanned:', decodedText);
             setIsScanning(false);
-            onScanSuccess(decodedText);
+            onScanSuccessRef.current(decodedText);
             
             // Stop scanner after successful scan
-            if (html5QrcodeRef.current && html5QrcodeRef.current.isScanning) {
-              html5QrcodeRef.current.stop().catch(() => {});
-            }
+            stopCurrentScanner().catch(() => {});
           },
           (error) => {
             // Silent error handling for decode errors
@@ -81,19 +103,9 @@ export default function QRScanner({ onScanSuccess }) {
     initScanner();
 
     return () => {
-      const stopScanner = async () => {
-        if (html5QrcodeRef.current && html5QrcodeRef.current.isScanning) {
-          try {
-            await html5QrcodeRef.current.stop();
-          } catch (err) {
-            console.warn('Error stopping scanner:', err);
-          }
-        }
-      };
-      
-      stopScanner();
+      stopCurrentScanner().catch(() => {});
     };
-  }, [selectedCamera, onScanSuccess]);
+  }, [selectedCamera]);
 
   return (
     <div className="space-y-4">
