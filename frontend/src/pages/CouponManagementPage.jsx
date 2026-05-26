@@ -736,43 +736,6 @@ export default function CouponManagementPage() {
     </div>
   )}
 
-      {/* Modal Konfirmasi Hapus Semua */}
-      {showDeleteAllConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={32} className="text-red-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Hapus Semua Kupon?</h2>
-            <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus <strong>seluruh ({coupons.length})</strong> data kupon? Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteAllConfirm(false)}
-                disabled={deletingAll}
-                className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                onClick={deleteAllCoupons}
-                disabled={deletingAll}
-                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-colors"
-              >
-                {deletingAll ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Menghapus...
-                  </>
-                ) : (
-                  'Ya, Hapus Semua'
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
