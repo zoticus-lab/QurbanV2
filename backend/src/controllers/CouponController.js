@@ -242,6 +242,25 @@ class CouponController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Delete all coupons (admin only)
+  static async deleteAllCoupons(req, res) {
+    try {
+      const deleted = await CouponModel.deleteAll();
+
+      if (deleted) {
+        res.json({
+          success: true,
+          message: 'All coupons deleted successfully'
+        });
+      } else {
+        res.status(400).json({ error: 'Failed to delete all coupons' });
+      }
+    } catch (error) {
+      console.error('Error deleting all coupons:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 module.exports = CouponController;

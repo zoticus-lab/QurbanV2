@@ -1,5 +1,6 @@
 const express = require('express');
 const CouponController = require('../controllers/CouponController');
+const { requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -15,6 +16,9 @@ router.post('/confirm-pickup', CouponController.confirmPickup);
 
 // Get QR code image
 router.get('/qr/:qr_secret', CouponController.generateQRImage);
+
+// Delete all coupons (admin only)
+router.delete('/bulk-delete', requireAdmin, CouponController.deleteAllCoupons);
 
 // Generic routes AFTER specific routes
 // Get all coupons

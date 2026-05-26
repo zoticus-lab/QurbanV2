@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Edit2, Trash2, Save, X, Eye, Image as ImageIcon } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import { Download, Edit2, Trash2, Save, X, Eye, Image as ImageIcon } from 'lucide-react';
 
 export default function CouponManagementPage() {
   const [coupons, setCoupons] = useState([]);
@@ -13,9 +14,9 @@ export default function CouponManagementPage() {
   const [showQRModal, setShowQRModal] = useState(false);
   const [selectedCouponQR, setSelectedCouponQR] = useState(null);
   const [qrImageUrl, setQrImageUrl] = useState(null);
-  const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
-  const [deletingAll, setDeletingAll] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
+  const [backingUpPdf, setBackingUpPdf] = useState(false);
+  const [backingUpExcel, setBackingUpExcel] = useState(false);
 
   const API_BASE = '/api'; // Gunakan relative path agar Vite Proxy bisa menangani HTTPS ke HTTP
   const token = localStorage.getItem('token');
@@ -130,22 +131,151 @@ export default function CouponManagementPage() {
     }
   };
 
-  const deleteAllCoupons = async () => {
+  const fetchAllCouponsForBackup = async () => {
+    const response = await axios.get(`${API_BASE}/coupons`, {
+      ...config,
+      params: { limit: 10000, offset: 0 }
+    });
+
+    return response.data?.data?.data || [];
+  };
+
+  const escapeCsvValue = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+  const downloadBlob = (content, filename, mimeType) => {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportExcel = async () => {
     try {
-      setDeletingAll(true);
-      // Hapus satu per satu karena API bulk delete backend belum tersedia
-      for (const coupon of coupons) {
-        await axios.delete(`${API_BASE}/coupons/${coupon.id}`, config);
-      }
-      
-      setCoupons([]);
-      setShowDeleteAllConfirm(false);
-      alert('✅ Semua kupon berhasil dihapus');
+      setBackingUpExcel(true);
+      const allCoupons = await fetchAllCouponsForBackup();
+
+      const headers = ['No Urut', 'Status', 'Nama Penerima', 'RT', 'RW', 'Alamat', 'Waktu Ambil', 'QR Secret'];
+      const rows = allCoupons.map((coupon) => [
+        coupon.no_urut,
+        coupon.status,
+        coupon.nama_penerima || '-',
+        coupon.rt || '-',
+        coupon.rw || '-',
+        coupon.alamat || '-',
+        coupon.waktu_ambil ? new Date(coupon.waktu_ambil).toLocaleString('id-ID') : '-',
+        coupon.qr_secret || '-',
+      ]);
+
+      const csv = [headers, ...rows]
+        .map((row) => row.map(escapeCsvValue).join(','))
+        .join('\n');
+
+      downloadBlob(csv, `backup-kupon-${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv;charset=utf-8;');
+      alert(`✅ Backup Excel/CSV berhasil diunduh (${allCoupons.length} kupon)`);
     } catch (error) {
-      console.error('Error deleting all coupons:', error);
-      alert('❌ Gagal menghapus semua kupon: ' + (error.response?.data?.error || error.message));
+      console.error('Error exporting coupons to CSV:', error);
+      alert('❌ Gagal export Excel/CSV: ' + (error.response?.data?.error || error.message));
     } finally {
-      setDeletingAll(false);
+      setBackingUpExcel(false);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      setBackingUpPdf(true);
+      const allCoupons = await fetchAllCouponsForBackup();
+      const pdf = new jsPDF({ orientation: 'l', unit: 'mm', format: 'a4', compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10;
+      const columns = [
+        { key: 'no_urut', label: 'No', width: 12 },
+        { key: 'status', label: 'Status', width: 20 },
+        { key: 'nama_penerima', label: 'Nama Penerima', width: 38 },
+        { key: 'rt_rw', label: 'RT/RW', width: 16 },
+        { key: 'alamat', label: 'Alamat', width: 90 },
+        { key: 'waktu_ambil', label: 'Waktu Ambil', width: 40 },
+        { key: 'qr_secret', label: 'QR Secret', width: 51 },
+      ];
+
+      const drawHeader = () => {
+        pdf.setFillColor(34, 197, 94);
+        pdf.rect(margin, 10, pageWidth - margin * 2, 12, 'F');
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(14);
+        pdf.text('Backup Data Kupon', margin + 4, 18);
+        pdf.setFontSize(9);
+        pdf.text(`Total data: ${allCoupons.length} kupon`, pageWidth - margin - 45, 18);
+        pdf.setTextColor(0, 0, 0);
+      };
+
+      const drawTableHeader = (startY) => {
+        let x = margin;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        columns.forEach((column) => {
+          pdf.setFillColor(229, 231, 235);
+          pdf.rect(x, startY, column.width, 8, 'F');
+          pdf.rect(x, startY, column.width, 8);
+          pdf.text(column.label, x + 1.5, startY + 5.5);
+          x += column.width;
+        });
+      };
+
+      const drawRow = (coupon, startY) => {
+        const values = [
+          String(coupon.no_urut ?? '-'),
+          String(coupon.status ?? '-'),
+          coupon.nama_penerima || '-',
+          coupon.rt || coupon.rw ? `${coupon.rt || '-'} / ${coupon.rw || '-'}` : '-',
+          coupon.alamat || '-',
+          coupon.waktu_ambil ? new Date(coupon.waktu_ambil).toLocaleString('id-ID') : '-',
+          coupon.qr_secret || '-',
+        ];
+
+        const lineSets = values.map((value, index) => pdf.splitTextToSize(String(value), columns[index].width - 2));
+        const rowHeight = Math.max(...lineSets.map((lines) => lines.length)) * 4.5 + 3;
+
+        if (startY + rowHeight > pageHeight - margin) {
+          pdf.addPage();
+          drawHeader();
+          drawTableHeader(24);
+          startY = 32;
+        }
+
+        let x = margin;
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7.5);
+        columns.forEach((column, index) => {
+          pdf.rect(x, startY, column.width, rowHeight);
+          pdf.text(lineSets[index], x + 1.2, startY + 4);
+          x += column.width;
+        });
+
+        return startY + rowHeight;
+      };
+
+      drawHeader();
+      drawTableHeader(24);
+
+      let currentY = 32;
+      allCoupons.forEach((coupon) => {
+        currentY = drawRow(coupon, currentY);
+      });
+
+      pdf.save(`backup-kupon-${new Date().toISOString().slice(0, 10)}.pdf`);
+      alert(`✅ Backup PDF berhasil diunduh (${allCoupons.length} kupon)`);
+    } catch (error) {
+      console.error('Error exporting coupons to PDF:', error);
+      alert('❌ Gagal backup PDF: ' + (error.response?.data?.error || error.message));
+    } finally {
+      setBackingUpPdf(false);
     }
   };
 
@@ -187,15 +317,24 @@ export default function CouponManagementPage() {
           <h1 className="text-3xl font-bold text-gray-900">📋 Manajemen Kupon</h1>
           <p className="text-gray-600 mt-2">Lihat, edit, dan hapus kupon yang sudah dicetak</p>
         </div>
-        {coupons.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <button
-            onClick={() => setShowDeleteAllConfirm(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow transition-colors font-medium w-full md:w-auto"
+            onClick={handleDownloadPDF}
+            disabled={backingUpPdf || coupons.length === 0}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white rounded-lg shadow transition-colors font-medium w-full sm:w-auto"
           >
-            <Trash2 size={20} />
-            Hapus Semua Kupon
+            <Download size={18} />
+            {backingUpPdf ? 'Membuat PDF...' : 'Backup PDF'}
           </button>
-        )}
+          <button
+            onClick={handleExportExcel}
+            disabled={backingUpExcel || coupons.length === 0}
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-lg shadow transition-colors font-medium w-full sm:w-auto"
+          >
+            <Download size={18} />
+            {backingUpExcel ? 'Mengekspor...' : 'Export Excel'}
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

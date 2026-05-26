@@ -164,6 +164,37 @@ class AuthController {
     }
   }
 
+  // Verify password without changing anything (for sensitive admin actions)
+  static async verifyPassword(req, res) {
+    try {
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({ error: 'Password is required' });
+      }
+
+      const user = await UserModel.getAuthById(req.user.id);
+
+      if (!user || !user.is_active) {
+        return res.status(401).json({ error: 'User not found or inactive' });
+      }
+
+      const validPassword = await UserModel.verifyPassword(password, user.password_hash);
+
+      if (!validPassword) {
+        return res.status(401).json({ error: 'Password is incorrect' });
+      }
+
+      res.json({
+        success: true,
+        message: 'Password verified successfully'
+      });
+    } catch (error) {
+      console.error('Verify password error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   // List all users (admin only)
   static async listUsers(req, res) {
     try {

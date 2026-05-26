@@ -44,6 +44,20 @@ class UserModel {
     }
   }
 
+  // Get user authentication data by ID
+  static async getAuthById(id) {
+    const conn = await pool.getConnection();
+    try {
+      const [rows] = await conn.execute(
+        'SELECT id, username, email, role, is_active, password_hash FROM users WHERE id = ?',
+        [id]
+      );
+      return rows[0] || null;
+    } finally {
+      conn.release();
+    }
+  }
+
   // Verify password
   static async verifyPassword(plainPassword, hashedPassword) {
     return bcrypt.compare(plainPassword, hashedPassword);

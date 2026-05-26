@@ -12,6 +12,7 @@ router.post('/verify-token', AuthController.verifyToken);
 // Protected routes
 router.get('/profile', verifyToken, AuthController.getProfile);
 router.post('/change-password', verifyToken, AuthController.changePassword);
+router.post('/verify-password', verifyToken, AuthController.verifyPassword);
 
 // Admin routes
 router.get('/users', verifyToken, requireAdmin, AuthController.listUsers);

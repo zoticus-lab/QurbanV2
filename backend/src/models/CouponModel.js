@@ -201,6 +201,17 @@ class CouponModel {
     }
   }
 
+  // Delete all coupons
+  static async deleteAll() {
+    const conn = await pool.getConnection();
+    try {
+      const [result] = await conn.execute('DELETE FROM coupons');
+      return result.affectedRows >= 0;
+    } finally {
+      conn.release();
+    }
+  }
+
   // Get coupon by ID
   static async getById(id) {
     const conn = await pool.getConnection();

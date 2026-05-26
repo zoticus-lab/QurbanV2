@@ -45,6 +45,9 @@ export const authService = {
   
   changePassword: (oldPassword, newPassword) => 
     api.post('/auth/change-password', { oldPassword, newPassword }),
+
+  verifyPassword: (password) =>
+    api.post('/auth/verify-password', { password }),
   
   listUsers: () => 
     api.get('/auth/users'),
@@ -75,6 +78,9 @@ export const couponService = {
   
   getQRImage: (qr_secret) => 
     api.get(`/coupons/qr/${qr_secret}`),
+
+  deleteAllCoupons: () =>
+    api.delete('/coupons/bulk-delete'),
 };
 
 // Dashboard endpoints
